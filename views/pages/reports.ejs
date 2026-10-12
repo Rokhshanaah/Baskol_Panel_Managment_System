@@ -1,0 +1,434 @@
+<div class="space-y-6 report-page" dir="<%= dir %>">
+<%- include('../partials/flash', { flash }) %>
+<%
+  const expenseScope = typeof scope !== 'undefined' ? scope : (report.activeScope || '');
+  const expenseCategory = typeof category !== 'undefined' ? category : (report.activeCategory || '');
+  const cashTypeFilter = typeof cashType !== 'undefined' ? cashType : (report.activeCashType || '');
+  const searchFilter = typeof search !== 'undefined' ? search : (report.search || '');
+  const defaultPrintFormat = (appSettings.printFormat || 'A4').toUpperCase();
+%>
+
+  <div class="report-toolbar no-print page-panel rounded-2xl p-3 md:p-4">
+    <div class="report-toolbar__meta">
+      <span class="report-toolbar__badge"><%= t('fields.reportBadge') %></span>
+      <span class="report-toolbar__desc"><%= report.subtitle %></span>
+    </div>
+    <div class="report-toolbar__controls">
+      <form method="GET" class="report-toolbar__form">
+        <input type="hidden" name="type" value="<%= reportType %>">
+        <% if (reportType === 'invoice') { %>
+          <label class="report-toolbar__field report-toolbar__field--wide">
+            <span><%= t('fields.customer') %></span>
+            <select name="customer_id" required>
+              <option value=""><%= t('fields.selectCustomer') %></option>
+              <% for (const c of report.customers || []) { %>
+                <option value="<%= c.id %>" <%= String(customerId||'')===String(c.id)?'selected':'' %>><%= c.customer_code %> - <%= c.name %></option>
+              <% } %>
+            </select>
+          </label>
+          <button type="submit" class="report-toolbar__btn report-toolbar__btn--primary"><%= t('fields.showInvoice') %></button>
+        <% } else if (reportType === 'customer-accounts') { %>
+          <input type="hidden" name="type" value="customer-accounts">
+          <label class="report-toolbar__field report-toolbar__field--wide">
+            <span><%= t('common.search') %></span>
+            <input type="search" name="search" value="<%= searchFilter %>" placeholder="<%= t('customerAccount.searchPlaceholder') %>">
+          </label>
+          <% if (customerId && report.customerAccount?.customer) { %>
+            <label class="report-toolbar__field report-toolbar__field--wide">
+              <span><%= t('customerAccount.selectCustomer') %></span>
+              <select name="customer_id">
+                <% for (const c of report.customerAccount?.customers || report.customers || []) { %>
+                  <option value="<%= c.id %>" <%= String(customerId)===String(c.id)?'selected':'' %>><%= c.customer_code %> - <%= c.name %></option>
+                <% } %>
+              </select>
+            </label>
+          <% } %>
+          <label class="report-toolbar__field">
+            <span><%= t('fields.fromDate') %></span>
+            <input type="date" name="from" value="<%= from %>" lang="<%= lang %>">
+          </label>
+          <label class="report-toolbar__field">
+            <span><%= t('fields.toDate') %></span>
+            <input type="date" name="to" value="<%= to %>" lang="<%= lang %>">
+          </label>
+          <button type="submit" class="report-toolbar__btn report-toolbar__btn--primary"><%= t('fields.apply') %></button>
+          <% if (customerId) { %>
+            <a href="/reports?type=customer-accounts<%= searchFilter ? '&search='+encodeURIComponent(searchFilter) : '' %>" class="report-toolbar__btn report-toolbar__btn--ghost"><%= t('customerAccount.backToList') %></a>
+          <% } %>
+        <% } else { %>
+          <label class="report-toolbar__field">
+            <span><%= t('fields.fromDate') %></span>
+            <input type="date" name="from" value="<%= from %>" lang="<%= lang %>" title="<%= t('fields.fromDate') %>">
+          </label>
+          <label class="report-toolbar__field">
+            <span><%= t('fields.toDate') %></span>
+            <input type="date" name="to" value="<%= to %>" lang="<%= lang %>" title="<%= t('fields.toDate') %>">
+          </label>
+          <% if (reportType === 'expenses') { %>
+            <input type="hidden" name="scope" value="<%= expenseScope %>">
+            <label class="report-toolbar__field">
+              <span><%= t('fields.category') %></span>
+              <input type="text" name="category" value="<%= expenseCategory %>" placeholder="<%= t('fields.category') %>">
+            </label>
+          <% } %>
+          <% if (reportType === 'cashbox') { %>
+            <input type="hidden" name="cash_type" value="<%= cashTypeFilter %>">
+          <% } %>
+          <button type="submit" class="report-toolbar__btn report-toolbar__btn--primary"><%= t('fields.apply') %></button>
+        <% } %>
+      </form>
+      <div class="report-toolbar__actions">
+        <button type="button" onclick="printReport()" class="report-toolbar__btn report-toolbar__btn--teal"><%= t('fields.print') %></button>
+        <a href="/reports/export?type=<%= reportType %><%= from ? '&from='+from : '' %><%= to ? '&to='+to : '' %><%= customerId ? '&customer_id='+customerId : '' %><%= searchFilter ? '&search='+encodeURIComponent(searchFilter) : '' %><%= expenseScope ? '&scope='+encodeURIComponent(expenseScope) : '' %><%= expenseCategory ? '&category='+encodeURIComponent(expenseCategory) : '' %><%= cashTypeFilter ? '&cash_type='+encodeURIComponent(cashTypeFilter) : '' %>" class="report-toolbar__btn report-toolbar__btn--green"><%= t('fields.exportCsv') %></a>
+        <a href="/reports-hub" class="report-toolbar__btn report-toolbar__btn--ghost"><%= t('fields.back') %></a>
+      </div>
+    </div>
+  </div>
+
+  <% if (report.invoice) { %>
+    <div class="invoice-print-bar no-print page-panel rounded-2xl p-4" id="invoicePrintBar">
+      <div class="invoice-print-bar__head">
+        <span class="invoice-print-bar__label"><%= t('fields.printFormatLabel') %></span>
+        <a href="/settings" class="invoice-print-bar__settings"><%= t('fields.printFormatSettingsLink') %></a>
+      </div>
+      <div class="print-format-options invoice-print-options" role="radiogroup" aria-label="<%= t('fields.printFormatLabel') %>">
+        <% [
+          { value: 'A4', label: t('fields.printFormatA4') },
+          { value: 'A5', label: t('fields.printFormatA5') },
+        ].forEach(opt => { %>
+          <label class="print-format-option">
+            <input type="radio" name="invoicePrintFormat" value="<%= opt.value %>" <%= defaultPrintFormat === opt.value ? 'checked' : '' %>>
+            <strong><%= opt.label %></strong>
+          </label>
+        <% }) %>
+      </div>
+      <p class="invoice-print-bar__hint" id="invoicePrintHint">
+        <% if (defaultPrintFormat === 'A5') { %><%= t('fields.printHintA5') %><% } else { %><%= t('fields.printHintA4') %><% } %>
+      </p>
+    </div>
+  <% } %>
+
+  <div id="reportPrintArea" class="report-print-area space-y-6<%= report.invoice ? ' print-format-' + defaultPrintFormat.toLowerCase() : '' %>">
+    <div class="report-print-header hidden print:block mb-6 pb-4 border-b-2 border-slate-300">
+      <%- include('../partials/print-brand-header', { size: 'md', headerClass: 'print-brand-header--report' }) %>
+      <h1 class="mt-4 text-xl font-black text-slate-900"><%= report.title %></h1>
+      <p class="mt-1 text-sm text-slate-600"><%= report.subtitle %></p>
+      <% if (from || to) { %><p class="mt-1 text-xs text-slate-500"><%= t('fields.range') %>: <%= from || t('fields.rangeStart') %> <%= t('fields.rangeTo') %> <%= to || t('fields.rangeEnd') %></p><% } %>
+      <p class="mt-2 text-xs text-slate-400"><%= new Date().toISOString().slice(0, 10).replaceAll('-', '/') %></p>
+    </div>
+
+    <% if (reportType !== 'invoice' && report.stats?.length) { %>
+      <%- include('../partials/report-stats-cards', { stats: report.stats }) %>
+      <%- include('../partials/report-summary-table', { stats: report.stats }) %>
+    <% } %>
+
+    <% if (reportType === 'expenses') { %>
+      <%- include('../partials/expense-scope-tabs', { baseUrl: '/reports', activeScope: expenseScope, from, to, category: expenseCategory, extraQuery: { type: 'expenses' } }) %>
+    <% } %>
+    <% if (reportType === 'cashbox') { %>
+      <%- include('../partials/cashbox-type-tabs', { activeType: cashTypeFilter, from, to }) %>
+    <% } %>
+
+    <% if (report.invoice) { const inv = report.invoice; const c = inv.customer; %>
+      <div class="invoice-box theme-surface rounded-[2rem] border shadow-sm overflow-hidden">
+        <div class="invoice-head border-b border-[var(--app-border)] bg-gradient-to-l from-teal-50 to-transparent p-6 dark:from-teal-500/10 print:hidden">
+          <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div class="flex gap-4 items-start min-w-0 flex-1">
+              <%- include('../partials/print-brand-header', { size: 'sm', headerClass: 'print-brand-header--invoice-screen', title: t('invoice.title') }) %>
+            </div>
+            <div class="rounded-2xl theme-surface border px-4 py-3 text-sm shrink-0">
+              <p><span class="font-black"><%= t('invoice.invoiceNo') %>:</span> <%= inv.number %></p>
+              <p class="mt-1"><span class="font-black"><%= t('fields.date') %>:</span> <%= inv.date %></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="hidden print:block border-b border-[var(--app-border)] p-6 invoice-print-head">
+          <%- include('../partials/print-brand-header', { size: 'sm', headerClass: 'print-brand-header--invoice-print', title: t('invoice.title') }) %>
+          <div class="mt-4 grid gap-3 text-sm md:grid-cols-2">
+            <p><span class="font-black"><%= t('invoice.invoiceNo') %>:</span> <%= inv.number %></p>
+            <p><span class="font-black"><%= t('fields.date') %>:</span> <%= inv.date %></p>
+          </div>
+        </div>
+
+        <div class="grid gap-4 border-b border-[var(--app-border)] p-6 md:grid-cols-2 print:hidden invoice-customer-grid">
+          <div class="rounded-2xl theme-surface-muted border p-4">
+            <h3 class="font-black text-sm"><%= t('invoice.customerInfo') %></h3>
+            <dl class="mt-3 space-y-2 text-sm">
+              <div class="flex justify-between gap-3"><dt class="opacity-70"><%= t('fields.name') %></dt><dd class="font-bold"><%= c.name %></dd></div>
+              <div class="flex justify-between gap-3"><dt class="opacity-70"><%= t('fields.fatherName') %></dt><dd class="font-bold"><%= c.father_name || '-' %></dd></div>
+              <div class="flex justify-between gap-3"><dt class="opacity-70"><%= t('invoice.customerCode') %></dt><dd class="font-bold"><%= c.customer_code || '-' %></dd></div>
+              <div class="flex justify-between gap-3"><dt class="opacity-70"><%= t('invoice.contact') %></dt><dd class="font-bold"><%= c.phone || '-' %></dd></div>
+              <div class="flex justify-between gap-3"><dt class="opacity-70"><%= t('fields.email') %></dt><dd class="font-bold"><%= c.email || '-' %></dd></div>
+              <div class="flex justify-between gap-3"><dt class="opacity-70"><%= t('fields.passport') %></dt><dd class="font-bold"><%= c.tazkira_or_passport || '-' %></dd></div>
+            </dl>
+          </div>
+          <div class="rounded-2xl theme-surface-muted border p-4">
+            <h3 class="font-black text-sm"><%= t('invoice.companyAndAddress') %></h3>
+            <dl class="mt-3 space-y-2 text-sm">
+              <div class="flex justify-between gap-3"><dt class="opacity-70"><%= t('fields.companyName') %></dt><dd class="font-bold"><%= c.company_name || '-' %></dd></div>
+              <div><dt class="opacity-70"><%= t('fields.address') %></dt><dd class="mt-1 font-bold leading-7"><%= c.address || '-' %></dd></div>
+              <% if (c.notes) { %><div><dt class="opacity-70"><%= t('fields.notes') %></dt><dd class="mt-1 text-xs leading-7"><%= c.notes %></dd></div><% } %>
+            </dl>
+          </div>
+        </div>
+
+        <div class="hidden print:grid gap-4 border-b border-[var(--app-border)] p-6 md:grid-cols-2 invoice-customer-print-grid">
+          <div class="overflow-x-auto rounded-none border border-slate-300">
+            <table class="w-full text-sm report-table">
+              <thead><tr><th colspan="2" class="px-4 py-3 text-right font-black"><%= t('invoice.customerInfo') %></th></tr></thead>
+              <tbody>
+                <tr><th class="px-4 py-2.5 text-right font-black w-[40%]"><%= t('fields.name') %></th><td class="px-4 py-2.5 font-bold"><%= c.name %></td></tr>
+                <tr><th class="px-4 py-2.5 text-right font-black"><%= t('fields.fatherName') %></th><td class="px-4 py-2.5 font-bold"><%= c.father_name || '-' %></td></tr>
+                <tr><th class="px-4 py-2.5 text-right font-black"><%= t('invoice.customerCode') %></th><td class="px-4 py-2.5 font-bold"><%= c.customer_code || '-' %></td></tr>
+                <tr><th class="px-4 py-2.5 text-right font-black"><%= t('invoice.contact') %></th><td class="px-4 py-2.5 font-bold"><%= c.phone || '-' %></td></tr>
+                <tr><th class="px-4 py-2.5 text-right font-black"><%= t('fields.email') %></th><td class="px-4 py-2.5 font-bold"><%= c.email || '-' %></td></tr>
+                <tr><th class="px-4 py-2.5 text-right font-black"><%= t('fields.passport') %></th><td class="px-4 py-2.5 font-bold"><%= c.tazkira_or_passport || '-' %></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="overflow-x-auto rounded-none border border-slate-300">
+            <table class="w-full text-sm report-table">
+              <thead><tr><th colspan="2" class="px-4 py-3 text-right font-black"><%= t('invoice.companyAndAddress') %></th></tr></thead>
+              <tbody>
+                <tr><th class="px-4 py-2.5 text-right font-black w-[40%]"><%= t('fields.companyName') %></th><td class="px-4 py-2.5 font-bold"><%= c.company_name || '-' %></td></tr>
+                <tr><th class="px-4 py-2.5 text-right font-black align-top"><%= t('fields.address') %></th><td class="px-4 py-2.5 font-bold leading-7"><%= c.address || '-' %></td></tr>
+                <% if (c.notes) { %><tr><th class="px-4 py-2.5 text-right font-black align-top"><%= t('fields.notes') %></th><td class="px-4 py-2.5 text-xs leading-7"><%= c.notes %></td></tr><% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <h3 class="font-black"><%= t('invoice.cargoFreightItems') %></h3>
+          <div class="mt-4 overflow-x-auto rounded-2xl border border-[var(--app-border)] invoice-table-wrap">
+            <table class="w-full min-w-[980px] text-sm report-table invoice-items-table invoice-fit-table">
+              <colgroup>
+                <col class="inv-col inv-col--row">
+                <col class="inv-col inv-col--container">
+                <col class="inv-col inv-col--code">
+                <col class="inv-col inv-col--name">
+                <col class="inv-col inv-col--origin">
+                <col class="inv-col inv-col--dest">
+                <col class="inv-col inv-col--cartons">
+                <col class="inv-col inv-col--cbm">
+                <col class="inv-col inv-col--weight">
+                <col class="inv-col inv-col--freight">
+              </colgroup>
+              <thead class="theme-surface-muted">
+                <tr>
+                  <th class="px-3 py-3 text-right"><%= t('common.row') %></th>
+                  <th class="px-3 py-3 text-right"><%= t('fields.container') %></th>
+                  <th class="px-3 py-3 text-right"><%= t('fields.cargoCode') %></th>
+                  <th class="px-3 py-3 text-right"><%= t('fields.cargoName') %></th>
+                  <th class="px-3 py-3 text-right"><%= t('fields.origin') %></th>
+                  <th class="px-3 py-3 text-right"><%= t('fields.destination') %></th>
+                  <th class="px-3 py-3 text-right"><%= t('fields.cartons') %></th>
+                  <th class="px-3 py-3 text-right"><%= t('fields.cbm') %></th>
+                  <th class="px-3 py-3 text-right"><%= t('fields.weight') %></th>
+                  <th class="px-3 py-3 text-right"><%= t('fields.freightShare') %></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[var(--app-border)]">
+                <% if (!inv.lines.length) { %><tr><td colspan="10" class="px-4 py-8 text-center opacity-60"><%= t('invoice.noLines') %></td></tr><% } %>
+                <% inv.lines.forEach(line => { %>
+                  <tr>
+                    <td class="px-3 py-3 invoice-cell-num"><%= line.rowNo %></td>
+                    <td class="px-3 py-3 font-bold invoice-cell-code"><%- String(line.containerNo || '-').replace(/-/g, '-<wbr>') %></td>
+                    <td class="px-3 py-3 invoice-cell-code"><%- String(line.cargoCode || '-').replace(/-/g, '-<wbr>') %></td>
+                    <td class="px-3 py-3"><%= line.cargoName %></td>
+                    <td class="px-3 py-3"><%= line.origin %></td>
+                    <td class="px-3 py-3"><%= line.destination %></td>
+                    <td class="px-3 py-3 invoice-cell-num"><%= line.cartons %></td>
+                    <td class="px-3 py-3 invoice-cell-num"><%= line.cbm %></td>
+                    <td class="px-3 py-3 invoice-cell-num"><%= line.weight %></td>
+                    <td class="px-3 py-3 font-black invoice-cell-num"><%= formatMoney(line.amount) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <% if (inv.payments?.length) { %>
+          <div class="border-t border-[var(--app-border)] p-6">
+            <h3 class="font-black"><%= t('invoice.registeredPayments') %></h3>
+            <div class="mt-4 overflow-x-auto rounded-2xl border border-[var(--app-border)] invoice-table-wrap">
+              <table class="w-full min-w-[640px] text-sm report-table invoice-payments-table invoice-fit-table">
+                <colgroup>
+                  <col class="inv-pay-col inv-pay-col--no">
+                  <col class="inv-pay-col inv-pay-col--date">
+                  <col class="inv-pay-col inv-pay-col--method">
+                  <col class="inv-pay-col inv-pay-col--amount">
+                  <col class="inv-pay-col inv-pay-col--notes">
+                </colgroup>
+                <thead class="theme-surface-muted"><tr><th class="px-3 py-3 text-right"><%= t('fields.number') %></th><th class="px-3 py-3 text-right"><%= t('fields.date') %></th><th class="px-3 py-3 text-right"><%= t('fields.method') %></th><th class="px-3 py-3 text-right"><%= t('fields.amount') %></th><th class="px-3 py-3 text-right"><%= t('fields.notes') %></th></tr></thead>
+                <tbody class="divide-y divide-[var(--app-border)]">
+                  <% inv.payments.forEach(p => { %>
+                    <tr><td class="px-3 py-3 font-bold"><%= p.payment_no %></td><td class="px-3 py-3"><%= String(p.payment_date||'').slice(0,10) %></td><td class="px-3 py-3"><%= fa(p.payment_method) %></td><td class="px-3 py-3 font-black"><%= formatMoney(p.amount_usd) %></td><td class="px-3 py-3 text-xs opacity-70"><%= p.notes || '-' %></td></tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% } %>
+
+        <div class="grid gap-3 border-t border-[var(--app-border)] p-6 md:grid-cols-2 xl:grid-cols-4 print:hidden">
+          <div class="rounded-2xl theme-surface-muted border p-4"><p class="text-xs opacity-70"><%= t('invoice.itemCount') %></p><p class="mt-1 text-lg font-black"><%= inv.totals.items %></p></div>
+          <div class="rounded-2xl theme-surface-muted border p-4"><p class="text-xs opacity-70"><%= t('invoice.totalCartons') %></p><p class="mt-1 text-lg font-black"><%= inv.totals.cartons %></p></div>
+          <div class="rounded-2xl theme-surface-muted border p-4"><p class="text-xs opacity-70"><%= t('invoice.totalCbm') %></p><p class="mt-1 text-lg font-black"><%= inv.totals.cbm %></p></div>
+          <div class="rounded-2xl theme-surface-muted border p-4"><p class="text-xs opacity-70"><%= t('invoice.totalFreight') %></p><p class="mt-1 text-lg font-black"><%= formatMoney(inv.freightTotal) %></p></div>
+        </div>
+
+        <div class="grid gap-3 border-t border-[var(--app-border)] bg-slate-50 p-6 dark:bg-slate-900/40 md:grid-cols-3 print:hidden">
+          <div class="rounded-2xl theme-surface border p-4"><p class="text-xs opacity-70"><%= t('invoice.grandTotalFreight') %></p><p class="mt-1 text-xl font-black"><%= formatMoney(inv.freightTotal) %></p></div>
+          <div class="rounded-2xl theme-surface border p-4"><p class="text-xs opacity-70"><%= t('invoice.paidTotal') %></p><p class="mt-1 text-xl font-black"><%= formatMoney(inv.paidTotal) %></p></div>
+          <div class="rounded-2xl border border-teal-300 bg-teal-50 p-4 dark:border-teal-500/30 dark:bg-teal-500/10"><p class="text-xs opacity-70"><%= t('invoice.balanceDue') %></p><p class="mt-1 text-xl font-black"><%= formatMoney(inv.balance) %></p></div>
+        </div>
+
+        <div class="hidden print:block border-t border-[var(--app-border)] p-6 invoice-summary-print">
+          <h3 class="font-black mb-3 text-sm"><%= t('fields.reportSummary') %></h3>
+          <table class="w-full min-w-[420px] text-sm report-table report-summary-table">
+            <tbody>
+              <tr><th class="px-4 py-2.5 text-right font-black w-[45%]"><%= t('invoice.itemCount') %></th><td class="px-4 py-2.5 font-bold"><%= inv.totals.items %></td></tr>
+              <tr><th class="px-4 py-2.5 text-right font-black"><%= t('invoice.totalCartons') %></th><td class="px-4 py-2.5 font-bold"><%= inv.totals.cartons %></td></tr>
+              <tr><th class="px-4 py-2.5 text-right font-black"><%= t('invoice.totalCbm') %></th><td class="px-4 py-2.5 font-bold"><%= inv.totals.cbm %></td></tr>
+              <tr><th class="px-4 py-2.5 text-right font-black"><%= t('invoice.totalFreight') %></th><td class="px-4 py-2.5 font-bold"><%= formatMoney(inv.freightTotal) %></td></tr>
+              <tr><th class="px-4 py-2.5 text-right font-black"><%= t('invoice.grandTotalFreight') %></th><td class="px-4 py-2.5 font-black"><%= formatMoney(inv.freightTotal) %></td></tr>
+              <tr><th class="px-4 py-2.5 text-right font-black"><%= t('invoice.paidTotal') %></th><td class="px-4 py-2.5 font-black"><%= formatMoney(inv.paidTotal) %></td></tr>
+              <tr><th class="px-4 py-2.5 text-right font-black"><%= t('invoice.balanceDue') %></th><td class="px-4 py-2.5 font-black"><%= formatMoney(inv.balance) %></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <% if (appSettings.invoiceFooter) { %>
+          <div class="border-t border-[var(--app-border)] px-6 py-4 text-center text-xs opacity-70 leading-7"><%= appSettings.invoiceFooter %></div>
+        <% } %>
+      </div>
+    <% } else if (reportType === 'invoice') { %>
+      <div class="theme-surface rounded-[2rem] border p-8 text-center shadow-sm">
+        <p class="text-sm opacity-70"><%= t('invoice.selectPrompt') %></p>
+      </div>
+    <% } %>
+
+    <% if (reportType === 'customer-accounts' && report.customerAccount?.mode === 'list') { %>
+      <div class="report-data-card theme-surface rounded-[2rem] border shadow-sm overflow-hidden">
+        <div class="report-data-card__head border-b border-[var(--app-border)] px-5 py-4">
+          <h2 class="font-black"><%= t('customerAccount.selectCustomer') %></h2>
+          <p class="mt-1 text-xs opacity-70"><%= t('customerAccount.listSubtitle') %></p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[720px] text-sm report-table">
+            <thead class="theme-surface-muted"><tr><% report.columns.forEach(col => { %><th class="px-4 py-3 text-right font-black"><%= col %></th><% }) %></tr></thead>
+            <tbody class="divide-y divide-[var(--app-border)]">
+              <% if (!report.rows.length) { %><tr><td colspan="<%= report.columns.length %>" class="px-4 py-8 text-center opacity-60"><%= t('common.noReportData') %></td></tr><% } %>
+              <% report.rows.forEach((row, i) => { const link = report.customerLinks?.[i]; %>
+                <tr class="cursor-pointer hover:bg-teal-50/60" onclick="if(!event.target.closest('a'))location.href='<%= link?.href || '#' %>'">
+                  <% row.slice(0, -1).forEach(cell => { %><td class="px-4 py-3"><%= cell %></td><% }) %>
+                  <td class="px-4 py-3"><a href="<%= link?.href || '#' %>" class="rounded-xl bg-teal-600 px-3 py-2 text-xs font-black text-white"><%= t('customerAccount.viewAccount') %></a></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (reportType === 'customer-accounts' && report.customerAccount?.mode === 'detail' && report.customerAccount.customer) { const cust = report.customerAccount.customer; %>
+      <div class="theme-surface rounded-[2rem] border p-5 md:p-6 shadow-sm">
+        <h2 class="font-black"><%= t('customerAccount.customerInfo') %></h2>
+        <dl class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+          <div><dt class="text-xs opacity-60"><%= t('fields.customerCode') %></dt><dd class="font-black"><%= cust.customer_code || '-' %></dd></div>
+          <div><dt class="text-xs opacity-60"><%= t('fields.name') %></dt><dd class="font-black"><%= cust.name || '-' %></dd></div>
+          <div><dt class="text-xs opacity-60"><%= t('fields.phone') %></dt><dd class="font-black"><%= cust.phone || '-' %></dd></div>
+          <div><dt class="text-xs opacity-60"><%= t('fields.company') %></dt><dd class="font-black"><%= cust.company_name || '-' %></dd></div>
+          <div class="sm:col-span-2"><dt class="text-xs opacity-60"><%= t('fields.address') %></dt><dd class="font-black"><%= cust.address || '-' %></dd></div>
+        </dl>
+        <% if (report.cargoBillingLinks?.length) { %>
+          <div class="mt-4 flex flex-wrap gap-2 border-t pt-4">
+            <% report.cargoBillingLinks.forEach(link => { %>
+              <a href="<%= link.href %>" class="rounded-xl bg-teal-50 px-3 py-2 text-xs font-black text-teal-700 hover:bg-teal-600 hover:text-white"><%= t('fields.customerAccount') %>: <%= link.code %></a>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+
+    <% if (report.columns?.length && reportType !== 'customer-accounts') { %>
+      <div class="report-data-card theme-surface rounded-[2rem] border shadow-sm overflow-hidden">
+        <% if (report.tableTitle) { %><div class="report-data-card__head border-b border-[var(--app-border)] px-5 py-4 print:hidden"><h2 class="font-black"><%= report.tableTitle %></h2></div><% } %>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[720px] text-sm report-table">
+            <thead class="theme-surface-muted"><tr><% report.columns.forEach(col => { %><th class="px-4 py-3 text-right font-black"><%= col %></th><% }) %></tr></thead>
+            <tbody class="divide-y divide-[var(--app-border)]">
+              <% if (!report.rows.length) { %><tr><td colspan="<%= report.columns.length %>" class="px-4 py-8 text-center opacity-60"><%= t('common.noReportData') %></td></tr><% } %>
+              <% report.rows.forEach(row => { %><tr><% row.forEach(cell => { %><td class="px-4 py-3"><%= cell %></td><% }) %></tr><% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } %>
+
+    <% for (const section of report.sections || []) { %>
+      <div class="report-data-card theme-surface rounded-[2rem] border shadow-sm overflow-hidden">
+        <div class="report-data-card__head border-b border-[var(--app-border)] px-5 py-4 print:hidden">
+          <h2 class="font-black"><%= section.title %></h2>
+          <% if (section.subtitle) { %><p class="mt-1 text-xs opacity-70"><%= section.subtitle %></p><% } %>
+        </div>
+        <div class="hidden print:block border-b border-slate-300 px-0 py-2">
+          <h2 class="font-black text-sm"><%= section.title %></h2>
+          <% if (section.subtitle) { %><p class="mt-0.5 text-xs text-slate-500"><%= section.subtitle %></p><% } %>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[720px] text-sm report-table">
+            <thead class="theme-surface-muted"><tr><% section.columns.forEach(col => { %><th class="px-4 py-3 text-right font-black"><%= col %></th><% }) %></tr></thead>
+            <tbody class="divide-y divide-[var(--app-border)]">
+              <% if (!section.rows.length) { %><tr><td colspan="<%= section.columns.length %>" class="px-4 py-8 text-center opacity-60"><%= t('common.noSectionData') %></td></tr><% } %>
+              <% section.rows.forEach(row => { %><tr><% row.forEach(cell => { %><td class="px-4 py-3"><%= cell %></td><% }) %></tr><% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+(function () {
+  const hints = {
+    A4: <%- JSON.stringify(t('fields.printHintA4')) %>,
+    A5: <%- JSON.stringify(t('fields.printHintA5')) %>,
+  };
+  const printArea = document.getElementById('reportPrintArea');
+  const hintEl = document.getElementById('invoicePrintHint');
+  const formatInputs = document.querySelectorAll('input[name="invoicePrintFormat"]');
+
+  function selectedFormat() {
+    const checked = document.querySelector('input[name="invoicePrintFormat"]:checked');
+    return checked ? checked.value : '<%= defaultPrintFormat %>';
+  }
+
+  function applyPrintFormat(format) {
+    if (!printArea) return;
+    printArea.classList.remove('print-format-a4', 'print-format-a5');
+    printArea.classList.add('print-format-' + format.toLowerCase());
+    document.documentElement.classList.remove('print-format-a4', 'print-format-a5');
+    document.documentElement.classList.add('print-format-' + format.toLowerCase());
+    if (hintEl && hints[format]) hintEl.textContent = hints[format];
+  }
+
+  formatInputs.forEach((input) => {
+    input.addEventListener('change', () => applyPrintFormat(selectedFormat()));
+  });
+
+  window.printReport = function printReport() {
+    const hasInvoicePicker = formatInputs.length > 0;
+    if (hasInvoicePicker) applyPrintFormat(selectedFormat());
+    window.print();
+    if (hasInvoicePicker) {
+      window.addEventListener('afterprint', () => {
+        document.documentElement.classList.remove('print-format-a4', 'print-format-a5');
+      }, { once: true });
+    }
+  };
+})();
+</script>

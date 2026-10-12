@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>" dir="<%= dir %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title ? `${title} | ${appSettings.systemName}` : appSettings.systemName %></title>
+  <script>
+    (function () {
+      var saved = localStorage.getItem('baskol-theme');
+      var theme = saved === 'light' || saved === 'dark'
+        ? saved
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <%- assetTags %>
+</head>
+<body class="app-shell min-h-screen">
+<%
+const introModulePaths = [
+  '/users', '/customers', '/vehicles', '/vehicle-trips', '/containers', '/cargo-items',
+  '/container-loading', '/deliveries', '/cargo-locations', '/expenses', '/payments',
+  '/salaries', '/partners', '/cashbox',
+];
+function navItemActive(href, path) {
+  if (path === href || path.startsWith(href + '/')) return true;
+  if (href === '/introductions') {
+    return introModulePaths.some((p) => path === p || path.startsWith(p + '/'));
+  }
+  if (href === '/reports-hub') {
+    return path === '/reports' || path.startsWith('/reports/') || path === '/vehicle-profit' || path.startsWith('/vehicle-profit/');
+  }
+  if (href === '/settings') {
+    return path === '/profile' || path.startsWith('/profile/');
+  }
+  return false;
+}
+const navGroups = [
+  { label: t('nav.dashboard'), icon:'dashboard', page:'dashboard', items:[{ label: t('nav.dashboard'), href:'/dashboard', icon:'dashboard' }] },
+  { label: t('nav.weighbridge'), icon:'scale', page:'weighbridge', items:[{ label: t('nav.weighbridge'), href:'/weighbridge-tickets', icon:'scale' }] },
+  { label: t('nav.introductions'), icon:'database', page:'introductions', items:[{ label: t('nav.introductions'), href:'/introductions', icon:'database' }] },
+  { label: t('nav.reports'), icon:'report', page:'reports-hub', items:[{ label: t('nav.reports'), href:'/reports-hub', icon:'report' }] },
+  { label: t('nav.settings'), icon:'settings', page:'settings', items:[{ label: t('nav.settings'), href:'/settings', icon:'settings' }] },
+].filter((group) => canPage(group.page));
+%>
+<div id="sidebarOverlay" class="no-print fixed inset-0 z-40 hidden bg-slate-950/60 backdrop-blur-sm lg:hidden"></div>
+<div class="app-layout min-h-screen flex">
+  <aside id="appSidebar" class="sidebar-shell no-print fixed lg:static inset-y-0 z-50 flex w-64 max-w-[85vw] lg:max-w-none flex-col transform transition-transform duration-300 ease-in-out <%= dir === 'ltr' ? 'left-0 -translate-x-full lg:translate-x-0 border-r-2' : 'right-0 translate-x-full lg:translate-x-0 border-l-2' %>">
+    <div class="sidebar-shell__header border-b border-[var(--sidebar-border)]">
+      <div class="sidebar-brand">
+        <span class="sidebar-brand__logo"><%- include('../partials/brand-logo', { logoClass: 'brand-logo--sidebar' }) %></span>
+        <div class="min-w-0 flex-1">
+          <p class="sidebar-brand__title"><%= appSettings.systemName %></p>
+          <p class="sidebar-brand__subtitle"><%= appSettings.systemSubtitle %></p>
+        </div>
+        <button id="sidebarCloseBtn" type="button" class="sidebar-close-btn"><%- icon('close','w-5 h-5') %></button>
+      </div>
+    </div>
+    <nav class="sidebar-shell__nav flex-1 overflow-y-auto">
+      <% for (const group of navGroups) { const item = group.items[0]; const active = navItemActive(item.href, currentPath); %>
+        <%- include('../partials/sidebar-nav-link', { href: item.href, label: item.label, iconName: item.icon, active }) %>
+      <% } %>
+    </nav>
+    <div class="sidebar-shell__footer mt-auto border-t border-[var(--sidebar-border)]">
+      <div class="sidebar-profile">
+        <a href="/profile" class="sidebar-profile__link flex items-center gap-2.5">
+          <%- include('../partials/avatar', { photoPath: user?.photo_path, name: user?.name, fallback: t('nav.user'), wrapClass: 'sidebar-profile__avatar' }) %>
+          <div class="min-w-0">
+            <p class="sidebar-profile__name truncate"><%= user?.name || t('nav.user') %></p>
+            <p class="sidebar-profile__email truncate"><%= user?.email || '' %></p>
+          </div>
+        </a>
+        <form method="POST" action="/logout">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="sidebar-logout"><%- icon('logout','w-4 h-4') %><span><%= t('nav.logout') %></span></button>
+        </form>
+      </div>
+    </div>
+  </aside>
+  <main class="app-main flex-1 min-w-0">
+    <header class="app-header no-print sticky top-0 z-20">
+      <div class="app-header__inner">
+        <div class="flex items-center gap-3 min-w-0">
+          <button id="sidebarOpenBtn" type="button" class="app-header__menu-btn lg:hidden"><%- icon('dashboard','w-5 h-5') %></button>
+          <div class="min-w-0">
+            <h2 class="app-header__title truncate"><%= title || t('common.defaultAppTitle') %></h2>
+            <% if (typeof subtitle !== 'undefined' && subtitle) { %><p class="app-header__subtitle hidden sm:block truncate"><%= subtitle %></p><% } %>
+          </div>
+        </div>
+        <div class="app-header__actions">
+          <%- include('../partials/language-switcher') %>
+          <button id="themeToggleBtn" type="button" class="theme-toggle" aria-label="<%= t('common.themeToggle') %>">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5Z"/></svg>
+          </button>
+          <div class="app-header__meta hidden md:flex items-center gap-2">
+            <div class="app-header__date"><%= new Date().toISOString().slice(0,10).replaceAll('-','/') %></div>
+            <%- include('../partials/profile-dropdown') %>
+          </div>
+        </div>
+      </div>
+    </header>
+    <section class="app-content"><%- body %></section>
+  </main>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+ const sidebar=document.getElementById('appSidebar'), overlay=document.getElementById('sidebarOverlay'), openBtn=document.getElementById('sidebarOpenBtn'), closeBtn=document.getElementById('sidebarCloseBtn');
+ const isRtl=document.documentElement.getAttribute('dir')==='rtl';
+ const hiddenClass=isRtl?'translate-x-full':'-translate-x-full';
+ const shownClass='translate-x-0';
+ function openSidebar(){sidebar?.classList.remove(hiddenClass);sidebar?.classList.add(shownClass);overlay?.classList.remove('hidden');document.body.classList.add('overflow-hidden');}
+ function closeSidebar(){sidebar?.classList.add(hiddenClass);sidebar?.classList.remove(shownClass);overlay?.classList.add('hidden');document.body.classList.remove('overflow-hidden');}
+ openBtn?.addEventListener('click',openSidebar);closeBtn?.addEventListener('click',closeSidebar);overlay?.addEventListener('click',closeSidebar);document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSidebar();closeProfileMenu();}});document.querySelectorAll('[data-sidebar-link]').forEach(a=>a.addEventListener('click',()=>{if(innerWidth<1024)closeSidebar();}));
+ document.querySelectorAll('[data-confirm]').forEach(el=>el.addEventListener('click',e=>{if(!confirm(el.dataset.confirm||'<%= t('common.confirm') %>'))e.preventDefault();}));
+ const profileBtn=document.getElementById('headerProfileBtn'), profileMenu=document.getElementById('headerProfileMenu'), profileDropdown=document.getElementById('headerProfileDropdown');
+ function closeProfileMenu(){profileDropdown?.classList.add('hidden');profileBtn?.setAttribute('aria-expanded','false');}
+ function toggleProfileMenu(e){e?.stopPropagation();if(!profileDropdown)return;const open=profileDropdown.classList.contains('hidden');if(open){profileDropdown.classList.remove('hidden');profileBtn?.setAttribute('aria-expanded','true');}else closeProfileMenu();}
+ profileBtn?.addEventListener('click',toggleProfileMenu);
+ document.addEventListener('click',e=>{if(profileMenu&&!profileMenu.contains(e.target))closeProfileMenu();});
+});
+</script>
+</body>
+</html>

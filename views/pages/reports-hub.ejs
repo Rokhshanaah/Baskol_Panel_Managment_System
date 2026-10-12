@@ -1,0 +1,29 @@
+<div class="space-y-6" dir="<%= dir %>">
+  <%- include('../partials/flash', { flash }) %>
+
+  <% const cards = [
+    ['overview', 'report', 'blue'],
+    ['location', 'location', 'rose'],
+    ['expenses', 'expense', 'red'],
+    ['payments', 'payment', 'cyan'],
+    ['cashbox', 'money', 'emerald'],
+    ['containers', 'container', 'sky'],
+    ['loading', 'loading', 'amber'],
+    ['weighbridge', 'scale', 'purple'],
+    ['cargo', 'cargo', 'amber'],
+    ['profitLoss', 'report', 'green'],
+    ['invoice', 'payment', 'violet'],
+    ['customerAccounts', 'customer', 'cyan'],
+    ['vehicleTrips', 'truck', 'sky'],
+    ['deliveries', 'cargo', 'green'],
+    ['partners', 'money', 'purple'],
+    ['salaries', 'users', 'violet'],
+    ['vehicleProfit', 'report', 'emerald']
+  ]; %>
+
+  <div class="hub-card-grid grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+    <% cards.forEach(c => { %>
+      <%- include('../partials/glow-card-link', { href: '/reports?type=' + (c[0] === 'profitLoss' ? 'profit-loss' : c[0] === 'vehicleTrips' ? 'vehicle-trips' : c[0] === 'vehicleProfit' ? 'vehicle-profit' : c[0] === 'customerAccounts' ? 'customer-accounts' : c[0]), title: t(`reportsHub.${c[0]}.title`), desc: t(`reportsHub.${c[0]}.desc`), iconName: c[1], color: c[2], cta: t('common.viewReport') }) %>
+    <% }) %>
+  </div>
+</div>

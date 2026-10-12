@@ -1,0 +1,71 @@
+<div class="space-y-4 printable-area" dir="<%= dir %>">
+<%- include('../partials/flash') %>
+
+<% if (form) { %>
+<div class="customer-panel rounded-[1.25rem] p-4 md:p-5">
+  <h3 class="mb-4 text-sm font-black"><%= editingId ? t('forms.salaries.edit') : t('forms.salaries.new') %></h3>
+  <form method="POST" action="/salaries/save" class="grid grid-cols-1 gap-3 md:grid-cols-2">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="id" value="<%= editingId || '' %>">
+    <input type="hidden" name="salary_no" value="<%= form.salary_no || '' %>">
+    <div><label class="customer-label"><%= t('fields.employeeName') %></label><input name="employee_name" value="<%= form.employee_name || '' %>" class="customer-input" required></div>
+    <div><label class="customer-label"><%= t('fields.salaryMonth') %></label><input name="salary_month" type="month" value="<%= form.salary_month || '' %>" class="customer-input"></div>
+    <%- include('../partials/currency-fields', {
+      prefix: 'salary',
+      amount: form.amount,
+      currency: form.currency,
+      amountRequired: true,
+      labelClass: 'customer-label',
+      inputClass: 'customer-input',
+    }) %>
+    <div><label class="customer-label"><%= t('fields.paidDate') %></label><input name="paid_date" type="date" value="<%= form.paid_date || '' %>" class="customer-input"></div>
+    <div class="md:col-span-2 flex justify-end gap-2">
+      <a href="/salaries" class="inline-flex h-9 items-center rounded-xl bg-slate-100 px-4 text-xs font-black"><%= t('common.cancel') %></a>
+      <button class="inline-flex h-9 items-center rounded-xl bg-teal-600 px-5 text-xs font-black text-white"><%= t('common.save') %></button>
+    </div>
+  </form>
+</div>
+<% } %>
+
+<div class="customer-card overflow-hidden">
+  <%- include('../partials/table-toolbar', { search, showPrint: true, buttons: [{ href: '/salaries?form=create', label: t('pages.salaries.add'), icon: 'plus', variant: 'primary' }] }) %>
+  <div class="overflow-x-auto">
+    <table class="data-table min-w-full">
+      <thead>
+        <tr>
+          <th class="data-table__th data-table__th--row"><%= t('common.row') %></th>
+          <th class="data-table__th"><%= t('fields.salaryNo') %></th>
+          <th class="data-table__th"><%= t('fields.employeeName') %></th>
+          <th class="data-table__th"><%= t('fields.salaryMonth') %></th>
+          <th class="data-table__th data-table__th--num"><%= t('fields.amount') %></th>
+          <th class="data-table__th"><%= t('fields.paidDate') %></th>
+          <th class="data-table__th data-table__th--actions"><%= t('common.actions') %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="7" class="data-table__empty"><%= t('pages.salaries.empty') %></td></tr>
+        <% } %>
+        <% rows.forEach((row, i) => { %>
+          <tr class="data-table__row">
+            <td class="data-table__td data-table__td--row"><%= rowNo(pagination, i) %></td>
+            <td class="data-table__td data-table__td--code"><%= row.salary_no %></td>
+            <td class="data-table__td"><%= row.employee_name %></td>
+            <td class="data-table__td"><%= row.salary_month || '-' %></td>
+            <td class="data-table__td data-table__td--num"><%= formatMoney(row.amount, row.currency) %></td>
+            <td class="data-table__td"><%= row.paid_date || '-' %></td>
+            <td class="data-table__td data-table__td--actions">
+              <%- include('../partials/table-row-actions', {
+                editHref: '/salaries?edit=' + row.id,
+                deleteAction: '/salaries/' + row.id + '/delete',
+                confirmMessage: t('fields.confirmDeleteSalary'),
+              }) %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <div class="border-t border-[var(--app-border)] px-3 py-3"><%- include('../partials/pagination') %></div>
+</div>
+</div>

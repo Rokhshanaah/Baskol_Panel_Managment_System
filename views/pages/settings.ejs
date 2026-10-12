@@ -1,0 +1,191 @@
+<div class="space-y-6 settings-page" dir="<%= dir %>" data-settings-tabs>
+  <%- include('../partials/flash', { flash }) %>
+
+  <div class="page-panel rounded-[2rem] p-4 md:p-6">
+    <div class="settings-tabs__nav" role="tablist" aria-label="<%= t('pages.settings.title') %>">
+      <button type="button" class="settings-tabs__btn is-active" role="tab" aria-selected="true" data-settings-tab="identity"><%= t('settings.tabs.identity') %></button>
+      <button type="button" class="settings-tabs__btn" role="tab" aria-selected="false" data-settings-tab="company"><%= t('settings.tabs.company') %></button>
+      <button type="button" class="settings-tabs__btn" role="tab" aria-selected="false" data-settings-tab="display"><%= t('settings.tabs.display') %></button>
+      <button type="button" class="settings-tabs__btn" role="tab" aria-selected="false" data-settings-tab="database"><%= t('settings.tabs.database') %></button>
+    </div>
+
+    <form method="POST" action="/settings" enctype="multipart/form-data" class="mt-6">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="settings-tabs__panel is-active" role="tabpanel" data-settings-panel="identity">
+        <div class="settings-tabs__head">
+          <h3 class="text-lg font-black"><%= t('fields.identityHead') %></h3>
+          <p class="mt-2 text-sm opacity-70"><%= t('fields.identityDesc') %></p>
+        </div>
+        <div class="mt-6 grid max-w-3xl grid-cols-1 gap-5 md:grid-cols-2">
+          <div class="md:col-span-2">
+            <label class="mb-2 block text-xs font-black"><%= t('fields.systemName') %></label>
+            <input name="systemName" type="text" maxlength="80" value="<%= settings.systemName %>" class="settings-input" required>
+          </div>
+          <div class="md:col-span-2">
+            <label class="mb-2 block text-xs font-black"><%= t('fields.systemSubtitle') %></label>
+            <input name="systemSubtitle" type="text" maxlength="120" value="<%= settings.systemSubtitle %>" class="settings-input" required>
+            <p class="mt-2 text-xs opacity-60"><%= t('fields.exampleSubtitle') %></p>
+          </div>
+          <div class="md:col-span-2">
+            <label class="mb-2 block text-xs font-black"><%= t('fields.companyLogo') %></label>
+            <p class="mb-3 text-xs opacity-60"><%= t('fields.companyLogoHint') %></p>
+            <% const logoUrl = settings.logoPath ? '/storage/' + String(settings.logoPath).replace(/^\/+/, '') : ''; %>
+            <% if (logoUrl) { %>
+              <div class="settings-logo-preview">
+                <img src="<%= logoUrl %>" alt="" class="settings-logo-preview__img">
+                <label class="settings-logo-preview__remove">
+                  <input type="checkbox" name="removeLogo" value="1">
+                  <span><%= t('fields.removeLogo') %></span>
+                </label>
+              </div>
+            <% } %>
+            <input type="file" name="logo" accept="image/jpeg,image/png,image/webp,image/gif" class="settings-input !py-2 file:mr-3 file:rounded-xl file:border-0 file:bg-teal-50 file:px-3 file:py-1.5 file:text-sm file:font-black file:text-teal-700">
+            <p class="mt-2 text-xs opacity-60"><%= t('fields.logoUploadHint') %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-tabs__panel" role="tabpanel" hidden data-settings-panel="company">
+        <div class="settings-tabs__head">
+          <h3 class="text-lg font-black"><%= t('fields.companyHead') %></h3>
+          <p class="mt-2 text-sm opacity-70"><%= t('fields.companyDesc') %></p>
+        </div>
+        <div class="mt-6 grid max-w-3xl grid-cols-1 gap-5 md:grid-cols-2">
+          <div class="md:col-span-2">
+            <label class="mb-2 block text-xs font-black"><%= t('fields.companyName') %></label>
+            <input name="companyName" type="text" maxlength="120" value="<%= settings.companyName %>" class="settings-input" placeholder="<%= t('fields.exampleCompany') %>">
+          </div>
+          <div>
+            <label class="mb-2 block text-xs font-black"><%= t('fields.phone') %></label>
+            <input name="companyPhone" type="text" maxlength="40" value="<%= settings.companyPhone %>" class="settings-input" placeholder="0700 000 000">
+          </div>
+          <div>
+            <label class="mb-2 block text-xs font-black"><%= t('fields.email') %></label>
+            <input name="companyEmail" type="email" maxlength="120" value="<%= settings.companyEmail %>" class="settings-input" placeholder="info@company.com">
+          </div>
+          <div class="md:col-span-2">
+            <label class="mb-2 block text-xs font-black"><%= t('fields.address') %></label>
+            <textarea name="companyAddress" rows="2" maxlength="255" class="settings-textarea" placeholder="<%= t('fields.exampleAddress') %>"><%= settings.companyAddress %></textarea>
+          </div>
+          <div class="md:col-span-2">
+            <label class="mb-2 block text-xs font-black"><%= t('fields.invoiceFooter') %></label>
+            <textarea name="invoiceFooter" rows="2" maxlength="255" class="settings-textarea" placeholder="<%= t('fields.exampleInvoiceFooter') %>"><%= settings.invoiceFooter %></textarea>
+          </div>
+          <div>
+            <label class="mb-2 block text-xs font-black"><%= t('fields.defaultCurrency') %></label>
+            <select name="defaultCurrency" class="settings-input">
+              <% (settings.enabledCurrencies || ['USD','AFN','CNY','PKR']).forEach(code => { %>
+                <option value="<%= code %>" <%= settings.defaultCurrency === code ? 'selected' : '' %>><%= code %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label class="mb-2 block text-xs font-black"><%= t('fields.enabledCurrencies') %></label>
+            <div class="flex flex-wrap gap-3">
+              <% ['USD','AFN','CNY','PKR','EUR','IRR'].forEach(code => { %>
+                <label class="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] px-3 py-2 text-sm font-bold">
+                  <input type="checkbox" name="currency_<%= code %>" value="1" <%= (settings.enabledCurrencies || []).includes(code) ? 'checked' : '' %>>
+                  <%= code %>
+                </label>
+              <% }) %>
+            </div>
+          </div>
+          <div class="md:col-span-2">
+            <label class="mb-2 block text-xs font-black"><%= t('fields.currencyRates') %></label>
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-3">
+              <% ['USD','AFN','CNY','PKR','EUR','IRR'].forEach(code => { %>
+                <div>
+                  <label class="text-xs opacity-70"><%= code %></label>
+                  <input name="rate_<%= code %>" type="number" step="0.0001" value="<%= (settings.currencyRates && settings.currencyRates[code]) || (code === 'USD' ? 1 : '') %>" class="settings-input" <%= code === 'USD' ? 'readonly' : '' %>>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-tabs__panel" role="tabpanel" hidden data-settings-panel="display">
+        <div class="settings-tabs__head">
+          <h3 class="text-lg font-black"><%= t('fields.displayHead') %></h3>
+          <p class="mt-2 text-sm opacity-70"><%= t('fields.displayDesc') %></p>
+        </div>
+        <div class="mt-6 grid max-w-3xl grid-cols-1 gap-5 md:grid-cols-2">
+          <div>
+            <label class="mb-2 block text-xs font-black"><%= t('fields.recordsPerPage') %></label>
+            <input name="recordsPerPage" type="number" min="5" max="100" step="1" value="<%= settings.recordsPerPage %>" class="settings-input" required>
+            <p class="mt-2 text-xs opacity-60"><%= t('fields.examplePerPage') %></p>
+          </div>
+          <div>
+            <label class="mb-2 block text-xs font-black"><%= t('fields.codeDigits') %></label>
+            <input name="codeDigits" type="number" min="4" max="10" step="1" value="<%= settings.codeDigits %>" class="settings-input" required>
+            <p class="mt-2 text-xs opacity-60"><%= t('fields.exampleCodeDigits') %></p>
+          </div>
+        </div>
+        <% const currentPrintFormat = (settings.printFormat || 'A4').toUpperCase(); %>
+        <div class="mt-8 max-w-3xl">
+          <label class="mb-3 block text-xs font-black"><%= t('fields.printFormat') %></label>
+          <div class="print-format-options settings-print-options">
+            <% [
+              { value: 'A4', label: t('fields.printFormatA4'), hint: t('fields.printHintA4') },
+              { value: 'A5', label: t('fields.printFormatA5'), hint: t('fields.printHintA5') },
+            ].forEach(opt => { %>
+              <label class="print-format-option">
+                <input type="radio" name="printFormat" value="<%= opt.value %>" <%= currentPrintFormat === opt.value ? 'checked' : '' %>>
+                <strong><%= opt.label %></strong>
+                <small><%= opt.hint %></small>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-tabs__footer settings-tabs__footer--form">
+        <button type="submit" class="settings-save-btn"><%= t('settings.save') %></button>
+      </div>
+    </form>
+
+    <div class="settings-tabs__panel" role="tabpanel" hidden data-settings-panel="database">
+      <div class="settings-tabs__head">
+        <h3 class="text-lg font-black"><%= t('settings.databaseHead') %></h3>
+        <p class="mt-2 text-sm opacity-70"><%= t('settings.databaseDesc') %></p>
+      </div>
+
+      <div class="settings-db-actions">
+        <div class="settings-db-card">
+          <div class="settings-db-card__icon settings-db-card__icon--backup"><%- icon('database', 'h-6 w-6') %></div>
+          <div class="settings-db-card__body">
+            <h4 class="font-black"><%= t('settings.backupTitle') %></h4>
+            <p class="mt-1 text-sm opacity-70"><%= t('settings.backupDesc') %></p>
+          </div>
+          <a href="/settings/backup" class="settings-db-btn settings-db-btn--primary"><%= t('settings.backupBtn') %></a>
+        </div>
+
+        <div class="settings-db-card settings-db-card--danger">
+          <div class="settings-db-card__icon settings-db-card__icon--danger"><%- icon('trash', 'h-6 w-6') %></div>
+          <div class="settings-db-card__body">
+            <h4 class="font-black text-red-700 dark:text-red-300"><%= t('settings.resetTitle') %></h4>
+            <p class="mt-1 text-sm opacity-70"><%= t('settings.resetDesc') %></p>
+          </div>
+          <form method="POST" action="/settings/reset-database" class="settings-db-reset" data-settings-reset-form>
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <label class="settings-db-reset__label">
+              <span><%= t('settings.resetConfirmLabel', { phrase: resetConfirmPhrase }) %></span>
+              <input
+                type="text"
+                name="confirmPhrase"
+                class="settings-input settings-db-reset__input"
+                autocomplete="off"
+                placeholder="<%= resetConfirmPhrase %>"
+                data-settings-reset-input
+              >
+            </label>
+            <button type="submit" class="settings-db-btn settings-db-btn--danger" disabled data-settings-reset-btn data-confirm="<%= t('common.confirm') %>">
+              <%= t('settings.resetBtn') %>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

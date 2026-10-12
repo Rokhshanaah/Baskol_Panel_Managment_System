@@ -1,0 +1,127 @@
+<div class="space-y-4 printable-area" dir="<%= dir %>">
+<%- include('../partials/flash') %>
+
+<% if (form) { %>
+<div class="customer-panel rounded-[1.25rem] p-4 md:p-5">
+  <h3 class="mb-4 text-sm font-black"><%= editingId ? t('forms.partners.edit') : t('forms.partners.new') %></h3>
+  <form method="POST" action="/partners/save" class="grid grid-cols-1 gap-3 md:grid-cols-2">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="id" value="<%= editingId || '' %>">
+    <input type="hidden" name="partner_code" value="<%= form.partner_code || '' %>">
+    <div><label class="customer-label"><%= t('fields.partnerName') %></label><input name="name" value="<%= form.name || '' %>" class="customer-input" required></div>
+    <div><label class="customer-label"><%= t('fields.phone') %></label><input name="phone" value="<%= form.phone || '' %>" class="customer-input"></div>
+    <div><label class="customer-label"><%= t('fields.sharePercent') %></label><input name="share_percent" type="number" step="0.01" value="<%= form.share_percent || '' %>" class="customer-input"></div>
+    <%- include('../partials/currency-fields', {
+      prefix: 'partnerEquity',
+      amount: form.amount,
+      currency: form.currency,
+      labelClass: 'customer-label',
+      inputClass: 'customer-input',
+    }) %>
+    <div class="md:col-span-2 flex justify-end gap-2">
+      <a href="/partners" class="inline-flex h-9 items-center rounded-xl bg-slate-100 px-4 text-xs font-black"><%= t('common.cancel') %></a>
+      <button class="inline-flex h-9 items-center rounded-xl bg-teal-600 px-5 text-xs font-black text-white"><%= t('common.save') %></button>
+    </div>
+  </form>
+</div>
+<% } %>
+
+<% if (withdrawForm) { %>
+<div class="customer-panel rounded-[1.25rem] p-4 md:p-5">
+  <h3 class="mb-4 text-sm font-black"><%= t('forms.partners.withdraw') %></h3>
+  <form method="POST" action="/partners/withdrawals" class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="withdrawal_no" value="<%= withdrawForm.withdrawal_no %>">
+    <div><label class="customer-label"><%= t('fields.partnerName') %></label><select name="partner_id" class="customer-input" required><option value=""><%= t('fields.select') %></option><% rows.forEach(p => { %><option value="<%= p.id %>"><%= p.name %></option><% }) %></select></div>
+    <%- include('../partials/currency-fields', {
+      prefix: 'partnerWithdraw',
+      amount: withdrawForm.amount,
+      currency: withdrawForm.currency,
+      amountRequired: true,
+      labelClass: 'customer-label',
+      inputClass: 'customer-input',
+    }) %>
+    <div><label class="customer-label"><%= t('fields.date') %></label><input name="withdrawal_date" type="date" value="<%= withdrawForm.withdrawal_date %>" class="customer-input"></div>
+    <div class="md:col-span-2 xl:col-span-4 flex justify-end"><button class="inline-flex h-9 items-center justify-center rounded-xl bg-red-600 px-5 text-xs font-black text-white"><%= t('forms.partners.withdrawSave') %></button></div>
+  </form>
+</div>
+<% } %>
+
+<div class="customer-card overflow-hidden">
+  <%- include('../partials/table-toolbar', {
+    search,
+    showPrint: true,
+    buttons: [
+      { href: '/partners?form=create', label: t('pages.partners.add'), icon: 'plus', variant: 'primary' },
+      { href: '/partners?withdraw=1', label: t('forms.partners.withdraw'), icon: 'money', variant: 'secondary' },
+    ],
+  }) %>
+  <div class="overflow-x-auto">
+    <table class="data-table data-table--compact min-w-full">
+      <thead>
+        <tr>
+          <th class="data-table__th data-table__th--row"><%= t('common.row') %></th>
+          <th class="data-table__th data-table__th--code"><%= t('fields.code') %></th>
+          <th class="data-table__th"><%= t('fields.partnerName') %></th>
+          <th class="data-table__th data-table__th--num"><%= t('fields.sharePercent') %></th>
+          <th class="data-table__th data-table__th--num"><%= t('fields.equity') %></th>
+          <th class="data-table__th data-table__th--actions"><%= t('common.actions') %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="6" class="data-table__empty"><%= t('pages.partners.empty') %></td></tr>
+        <% } %>
+        <% rows.forEach((row, i) => { %>
+          <tr class="data-table__row">
+            <td class="data-table__td data-table__td--row"><%= rowNo(pagination, i) %></td>
+            <td class="data-table__td data-table__td--code"><%= row.partner_code %></td>
+            <td class="data-table__td"><%= row.name %></td>
+            <td class="data-table__td data-table__td--num"><%= row.share_percent != null && row.share_percent !== '' ? row.share_percent + '%' : '-' %></td>
+            <td class="data-table__td data-table__td--num"><%= formatLegacyMoney(row, 'equity_usd', 'equity_currency') %></td>
+            <td class="data-table__td data-table__td--actions">
+              <%- include('../partials/table-row-actions', {
+                editHref: '/partners?edit=' + row.id,
+                deleteAction: '/partners/' + row.id + '/delete',
+                confirmMessage: t('fields.confirmDeletePartner'),
+              }) %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <div class="border-t border-[var(--app-border)] px-3 py-3"><%- include('../partials/pagination') %></div>
+</div>
+
+<div class="customer-card overflow-hidden">
+  <div class="border-b border-[var(--app-border)] px-3 py-3">
+    <h3 class="text-sm font-black"><%= t('fields.recentWithdrawals') %></h3>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="data-table data-table--compact min-w-full">
+      <thead>
+        <tr>
+          <th class="data-table__th data-table__th--code"><%= t('fields.withdrawalNo') %></th>
+          <th class="data-table__th"><%= t('fields.partnerName') %></th>
+          <th class="data-table__th data-table__th--num"><%= t('fields.amount') %></th>
+          <th class="data-table__th"><%= t('fields.date') %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!withdrawals.length) { %>
+          <tr><td colspan="4" class="data-table__empty"><%= t('pages.partners.withdrawalsEmpty') %></td></tr>
+        <% } %>
+        <% withdrawals.forEach(w => { %>
+          <tr class="data-table__row">
+            <td class="data-table__td data-table__td--code"><%= w.withdrawal_no %></td>
+            <td class="data-table__td"><%= w.partner_name %></td>
+            <td class="data-table__td data-table__td--num"><%= formatMoney(w.amount, w.currency) %></td>
+            <td class="data-table__td"><%= w.withdrawal_date || '-' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>

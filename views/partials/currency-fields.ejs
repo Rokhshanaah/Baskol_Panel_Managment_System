@@ -1,0 +1,16 @@
+<%#
+  prefix (required), amount, currency
+  amountName='amount', labelClass, inputClass, amountRequired=false, amountLabelKey
+%>
+<%
+  const p = prefix;
+  const amtName = typeof amountName !== 'undefined' ? amountName : 'amount';
+  const lc = typeof labelClass !== 'undefined' ? labelClass : 'customer-label';
+  const ic = typeof inputClass !== 'undefined' ? inputClass : 'customer-input';
+  const cur = typeof currency !== 'undefined' && currency !== '' ? currency : defaultCurrency;
+  const amtVal = typeof amount !== 'undefined' && amount !== null ? amount : '';
+  const reqAttr = typeof amountRequired !== 'undefined' && amountRequired ? ' required' : '';
+  const amountLabel = typeof amountLabelKey !== 'undefined' ? t(amountLabelKey) : t('fields.amount');
+%>
+<div><label class="<%= lc %>" for="<%= p %>Amount"><%= amountLabel %></label><input id="<%= p %>Amount" name="<%= amtName %>" type="number" step="0.01" min="0" value="<%= amtVal %>" class="<%= ic %>"<%= reqAttr %>></div>
+<div><label class="<%= lc %>" for="<%= p %>Currency"><%= t('fields.currency') %></label><select id="<%= p %>Currency" name="currency" class="<%= ic %>"><% enabledCurrencies.forEach(v => { %><option value="<%= v %>" <%= cur === v ? 'selected' : '' %>><%= fa(v) %></option><% }) %></select></div>

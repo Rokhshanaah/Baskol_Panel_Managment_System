@@ -1,0 +1,81 @@
+<div class="space-y-6" dir="<%= dir %>">
+  <%- include('../partials/flash', { flash }) %>
+
+  <% const profitLossValue = Number(profitLoss || 0); const vehicleProfitValue = Number(vehicleProfit || 0); const cards = [
+    ['containers_in_transit', t('dashboard.containersInTransit'), Number(containersInTransit || 0).toLocaleString(), 'container', '', 'blue'],
+    ['company_expenses', t('dashboard.companyExpenses'), formatMoney(companyExpenses), 'money', '', 'red'],
+    ['overhead_expenses', t('dashboard.overheadExpenses'), formatMoney(overheadExpenses), 'report', '', 'amber'],
+    ['profit_loss', profitLossValue >= 0 ? t('dashboard.profit') : t('dashboard.loss'), formatMoney(Math.abs(profitLossValue)), 'report', '', profitLossValue >= 0 ? 'green' : 'rose'],
+    ['cash_balance', t('dashboard.cashBalance'), formatMoney(cashBalance), 'money', '', 'emerald'],
+    ['arrived_not_delivered', t('dashboard.arrivedNotDelivered'), Number(arrivedNotDelivered || 0).toLocaleString(), 'location', '', 'rose'],
+    ['receivables', t('dashboard.receivables'), formatMoney(receivables), 'money', '', 'cyan'],
+    ['payables', t('dashboard.payables'), formatMoney(payables), 'money', '', 'violet'],
+    ['profit_source', t('dashboard.profitSource'), formatMoney(totalFreight || 0), 'report', t('dashboard.profitSourceDesc'), 'sky'],
+    ['active_vehicles', t('dashboard.activeVehicles'), Number(activeVehicles || 0).toLocaleString(), 'truck', t('dashboard.activeVehiclesDesc'), 'purple'],
+    ['trips_in_transit', t('dashboard.tripsInTransit'), Number(tripsInTransit || 0).toLocaleString(), 'truck', t('dashboard.tripsInTransitDesc'), 'amber'],
+    ['vehicle_freight', t('dashboard.vehicleFreight'), formatMoney(vehicleFreight || 0), 'truck', t('dashboard.vehicleFreightDesc'), 'cyan'],
+    ['vehicle_trip_expenses', t('dashboard.vehicleTripExpenses'), formatMoney(vehicleTripExpenses || 0), 'expense', t('dashboard.vehicleTripExpensesDesc'), 'red'],
+    ['vehicle_profit', vehicleProfitValue >= 0 ? t('dashboard.vehicleProfit') : t('dashboard.vehicleLoss'), formatMoney(Math.abs(vehicleProfitValue)), 'truck', t('dashboard.vehicleProfitDesc'), vehicleProfitValue >= 0 ? 'green' : 'rose'],
+  ]; %>
+
+  <div class="hub-card-grid grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <% cards.forEach(card => { %>
+      <%- include('../partials/glow-card-link', {
+        href: '/dashboard?detail=' + card[0],
+        title: card[1],
+        desc: card[4],
+        iconName: card[3],
+        color: card[5],
+        value: card[2],
+        cta: t('common.viewDetails'),
+        cardSize: 'stat'
+      }) %>
+    <% }) %>
+  </div>
+
+  <% if (details) { %>
+    <div class="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+      <div class="theme-modal w-full max-w-6xl overflow-hidden rounded-[2rem] shadow-2xl border border-[var(--app-border)]">
+        <div class="theme-modal-muted flex items-start justify-between gap-4 border-b px-5 py-4">
+          <div>
+            <h2 class="text-lg font-black"><%= details.title %></h2>
+            <p class="mt-1 text-sm opacity-70"><%= details.subtitle %></p>
+          </div>
+          <a href="/dashboard" class="flex h-10 w-10 items-center justify-center rounded-2xl theme-surface border transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-300">✕</a>
+        </div>
+        <div class="max-h-[70vh] overflow-auto p-5">
+          <% if (details.rows.length) { %>
+            <div class="overflow-x-auto rounded-2xl border border-[var(--app-border)]">
+              <table class="w-full min-w-[900px] text-sm">
+                <thead class="theme-surface-muted">
+                  <tr>
+                    <% details.columns.forEach(c => { %>
+                      <th class="whitespace-nowrap px-4 py-3 text-right font-black"><%= c %></th>
+                    <% }) %>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[var(--app-border)]">
+                  <% details.rows.forEach(row => { %>
+                    <tr class="hover:bg-black/5 dark:hover:bg-white/5">
+                      <% row.forEach(cell => { %>
+                        <td class="whitespace-nowrap px-4 py-3"><%= cell %></td>
+                      <% }) %>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div class="rounded-3xl border border-dashed border-[var(--app-border)] theme-surface-muted p-10 text-center">
+              <p class="text-sm font-bold opacity-70"><%= t('dashboardDetail.noItems') %></p>
+            </div>
+          <% } %>
+        </div>
+        <div class="theme-modal-muted flex justify-between border-t px-5 py-4">
+          <p class="text-xs font-bold opacity-70"><%= t('dashboardDetail.rowCount') %>: <span class="font-black opacity-100"><%= details.rows.length %></span></p>
+          <a href="/dashboard" class="rounded-2xl bg-slate-900 px-5 py-2 text-sm font-black text-white transition hover:bg-slate-700 dark:bg-teal-600 dark:hover:bg-teal-500"><%= t('common.close') %></a>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>

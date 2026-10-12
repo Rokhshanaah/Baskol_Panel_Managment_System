@@ -1,0 +1,76 @@
+<div class="space-y-5" dir="<%= dir %>">
+<%- include('../partials/flash') %>
+
+<% if (form) { %>
+<div class="users-panel rounded-[1.8rem] p-5 md:p-6">
+  <div class="mb-5 flex justify-between border-b pb-5"><div><h3 class="font-black"><%= editingId ? t('forms.users.edit') : t('forms.users.new') %></h3><p class="mt-1 text-xs text-slate-500"><%= t('forms.users.desc') %></p></div><a href="/users" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-black"><%= t('common.closeForm') %></a></div>
+  <form method="POST" action="/users/save" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="id" value="<%= editingId || '' %>">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div><label class="users-label"><%= t('fields.name') %></label><input name="name" value="<%= form.name || '' %>" class="users-input" required></div>
+      <div><label class="users-label"><%= t('fields.email') %></label><input type="email" name="email" value="<%= form.email || '' %>" class="users-input" required></div>
+      <div><label class="users-label"><%= t('fields.password') %> <%= editingId ? t('fields.passwordIfChange') : '' %></label><input type="password" name="password" class="users-input" <%= editingId ? '' : 'required' %>></div>
+      <div><label class="users-label"><%= t('fields.role') %></label><select id="userRole" name="role" class="users-input"><% for (const role of userRoles) { %><option value="<%= role.key %>" <%= form.role===role.key?'selected':'' %>><%= role.label %></option><% } %></select><p id="roleHint" class="role-hint"></p></div>
+      <div class="md:col-span-2 xl:col-span-4">
+        <label class="users-label"><%= t('fields.photo') %> <span class="text-xs font-normal text-slate-500">(<%= t('fields.optional') %>)</span></label>
+        <% if (form.photo_path) { %><div class="mb-2"><%- include('../partials/avatar', { photoPath: form.photo_path, name: form.name, fallback: t('nav.user'), wrapClass: 'profile-avatar-preview' }) %></div><% } %>
+        <input type="file" name="photo" accept="image/*" class="users-input !py-2 file:mr-3 file:rounded-xl file:border-0 file:bg-teal-50 file:px-3 file:py-1.5 file:text-sm file:font-black file:text-teal-700">
+        <p class="mt-1 text-xs text-slate-500"><%= t('fields.photoHint') %></p>
+      </div>
+    </div>
+    <div id="permissionsBox" class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <h4 class="font-black text-sm"><%= t('fields.permissions') %></h4>
+      <p class="mt-1 text-xs text-slate-500"><%= t('fields.permissionsHint') %></p>
+      <div class="perm-grid mt-4">
+        <% for (const page of pagePermissions) { if (page.key === 'users' || page.key === 'settings') continue; %>
+          <label class="perm-item"><input type="checkbox" name="perm_<%= page.key %>" value="1" class="perm-check" data-page="<%= page.key %>" <%= (form.role==='admin' || form.permissions?.[page.key]) ? 'checked' : '' %>><span><%= page.label %></span></label>
+        <% } %>
+      </div>
+    </div>
+    <div class="mt-5 flex justify-end gap-3"><a href="/users" class="h-11 inline-flex items-center rounded-2xl bg-slate-100 px-5 text-sm font-black"><%= t('common.cancel') %></a><button class="h-11 rounded-2xl bg-teal-600 px-6 text-sm font-black text-white"><%= t('common.save') %></button></div>
+  </form>
+</div>
+<script>
+(function(){
+  const role=document.getElementById('userRole');
+  const box=document.getElementById('permissionsBox');
+  const hint=document.getElementById('roleHint');
+  const presets=<%- JSON.stringify(rolePresets) %>;
+  const roleLabels=<%- JSON.stringify(Object.fromEntries(userRoles.map(r=>[r.key,r.label]))) %>;
+  const roleHints=<%- JSON.stringify(roleHints) %>;
+  const selectedRoleLabel=<%- JSON.stringify(t('roleHints.selectedRole')) %>;
+  const checks=()=>document.querySelectorAll('.perm-check');
+  function applyPreset(roleKey, force){
+    const preset=presets[roleKey];
+    if(roleKey==='admin'){
+      checks().forEach(c=>{c.checked=true;c.disabled=true;});
+      box.style.opacity='.55';
+      return;
+    }
+    box.style.opacity='1';
+    checks().forEach(c=>{c.disabled=false;});
+    if(!force && <%= editingId ? 'true' : 'false' %>) return;
+    if(roleKey==='user'){
+      checks().forEach(c=>{c.checked=false;});
+      return;
+    }
+    if(preset){
+      checks().forEach(c=>{c.checked=preset.includes(c.dataset.page);});
+    }
+  }
+  function sync(force){
+    const roleKey=role?.value||'user';
+    hint.textContent=roleHints[roleKey]||(selectedRoleLabel+': '+(roleLabels[roleKey]||roleKey));
+    applyPreset(roleKey, force);
+  }
+  role?.addEventListener('change',()=>sync(true));
+  sync(false);
+})();
+</script>
+<% } %>
+
+<div class="overflow-hidden rounded-[1.8rem] border bg-white shadow-sm">
+  <%- include('../partials/table-toolbar', { search, buttons: [{ href: '/users?form=create', label: t('pages.users.add'), icon: 'plus', variant: 'primary' }] }) %>
+  <div class="overflow-x-auto"><table class="min-w-full text-right text-sm"><thead class="bg-slate-50"><tr><th class="px-4 py-3"><%= t('common.row') %></th><th class="px-4 py-3"><%= t('fields.name') %></th><th class="px-4 py-3"><%= t('fields.email') %></th><th class="px-4 py-3"><%= t('fields.role') %></th><th class="px-4 py-3"><%= t('common.actions') %></th></tr></thead><tbody class="divide-y"><% if(!rows.length){ %><tr><td colspan="5" class="p-10 text-center text-slate-500"><%= t('pages.users.empty') %></td></tr><% } %><% rows.forEach((r,i)=>{ %><tr><td class="px-4 py-3 font-black text-slate-500"><%= rowNo(pagination,i) %></td><td class="px-4 py-3 font-black"><%= r.name %></td><td class="px-4 py-3"><%= r.email %></td><td class="px-4 py-3"><%= fa(r.role) %></td><td class="px-4 py-3"><div class="flex gap-2"><a href="/users?edit=<%= r.id %>" class="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black"><%= t('common.edit') %></a><% if (String(r.id) !== String(user.id)) { %><form method="POST" action="/users/<%= r.id %>/delete"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button data-confirm="<%= t('fields.confirmDeleteUser') %>" class="rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-600"><%= t('common.delete') %></button></form><% } %></div></td></tr><% }) %></tbody></table></div>
+  <div class="border-t px-5 py-4"><%- include('../partials/pagination') %></div>
+</div>
+</div>

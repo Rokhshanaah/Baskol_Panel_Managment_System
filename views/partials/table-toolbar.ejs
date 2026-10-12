@@ -1,0 +1,34 @@
+<%
+const placeholder = typeof searchPlaceholder !== 'undefined' ? searchPlaceholder : t('common.search');
+const btnList = Array.isArray(buttons) ? buttons : [];
+const showSearch = typeof hideSearch === 'undefined' || !hideSearch;
+%>
+<div class="table-toolbar">
+  <div class="table-toolbar__actions">
+    <% btnList.forEach((btn) => {
+      const variant = btn.variant || 'primary';
+    %>
+      <a href="<%= btn.href %>" class="table-toolbar__btn table-toolbar__btn--<%= variant %>">
+        <% if (btn.icon) { %><%- icon(btn.icon, 'h-4 w-4') %><% } %><%= btn.label %>
+      </a>
+    <% }) %>
+    <% if (typeof showPrint !== 'undefined' && showPrint) { %>
+      <%- include('./print-btn') %>
+    <% } %>
+  </div>
+  <% if (showSearch) { %>
+    <form method="GET" class="table-toolbar__search">
+      <% if (typeof hiddenQuery === 'object' && hiddenQuery) { %>
+        <% Object.entries(hiddenQuery).forEach(([k, v]) => { if (v) { %><input type="hidden" name="<%= k %>" value="<%= v %>"><% } }) %>
+      <% } %>
+      <span class="table-toolbar__search-icon" aria-hidden="true"><%- icon('search', 'h-4 w-4') %></span>
+      <input
+        type="search"
+        name="search"
+        value="<%= typeof search !== 'undefined' ? search : '' %>"
+        placeholder="<%= placeholder %>"
+        class="table-toolbar__input"
+      >
+    </form>
+  <% } %>
+</div>

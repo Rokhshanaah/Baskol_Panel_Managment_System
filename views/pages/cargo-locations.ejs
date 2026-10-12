@@ -1,0 +1,112 @@
+<div class="space-y-4" dir="<%= dir %>">
+<%- include('../partials/flash') %>
+
+<% if (form) { %>
+<div class="loc-panel rounded-[1.25rem] p-4 md:p-5">
+  <div class="mb-4 flex justify-between border-b border-[var(--app-border)] pb-4">
+    <div>
+      <h3 class="text-sm font-black"><%= t('forms.cargoLocations.new') %></h3>
+      <p class="mt-1 text-xs text-slate-500"><%= t('forms.cargoLocations.desc') %></p>
+    </div>
+    <a href="/cargo-locations" class="inline-flex h-9 items-center rounded-xl bg-slate-100 px-3 text-xs font-black"><%= t('common.closeForm') %></a>
+  </div>
+  <form method="POST" action="/cargo-locations/save">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div><label class="loc-label"><%= t('fields.transportType') %></label><select name="transport_type" class="loc-input"><% for (const [v, l] of Object.entries(transportTypes)) { if (v === 'truck') continue; %><option value="<%= v %>" <%= form.transport_type === v ? 'selected' : '' %>><%= l %></option><% } %></select></div>
+      <div><label class="loc-label"><%= t('fields.transportNo') %></label><input id="transportNo" name="transport_no" value="<%= form.transport_no || '' %>" class="loc-input"></div>
+      <div><label class="loc-label"><%= t('fields.container') %></label><select id="locContainer" name="shipping_container_id" class="loc-input"><option value=""><%= t('fields.noContainer') %></option><% for (const c of containers) { %><option value="<%= c.id %>" data-no="<%= c.container_no %>" data-location="<%= c.current_location || '' %>"><%= c.container_no %></option><% } %></select></div>
+      <div><label class="loc-label"><%= t('fields.cargo') %></label><select id="locCargo" name="cargo_item_id" class="loc-input"><option value=""><%= t('fields.noCargo') %></option><% for (const c of cargoItems) { %><option value="<%= c.id %>" <%= String(form.cargo_item_id || '') === String(c.id) ? 'selected' : '' %>><%= c.cargo_code %> - <%= c.name %> - <%= c.customer_name || '' %></option><% } %></select></div>
+      <div><label class="loc-label"><%= t('fields.stage') %></label><select name="stage" class="loc-input"><% for (const [v, l] of Object.entries(stages)) { %><option value="<%= v %>"><%= l %></option><% } %></select></div>
+      <div><label class="loc-label"><%= t('fields.location') %></label><input id="locationName" name="location_name" class="loc-input" required></div>
+      <div><label class="loc-label"><%= t('fields.status') %></label><select name="status" class="loc-input"><% for (const [v, l] of Object.entries(statuses)) { %><option value="<%= v %>"><%= l %></option><% } %></select></div>
+      <div><label class="loc-label"><%= t('fields.arrivedAt') %></label><input name="arrived_at" type="datetime-local" class="loc-input"></div>
+      <div><label class="loc-label"><%= t('fields.departedAt') %></label><input name="departed_at" type="datetime-local" class="loc-input"></div>
+      <div class="md:col-span-2 xl:col-span-4"><label class="loc-label"><%= t('fields.notes') %></label><textarea name="notes" rows="2" class="loc-input !h-auto py-2.5"></textarea></div>
+    </div>
+
+    <div class="mt-5 rounded-2xl border border-teal-200 bg-teal-50/60 p-4 md:p-5">
+      <p class="text-sm font-black text-teal-900"><%= t('forms.cargoLocations.expenseSection') %></p>
+      <p class="mt-1 text-xs text-slate-600"><%= t('forms.cargoLocations.expenseDesc') %> <%= t('fields.routeExpenseCashboxHint') %></p>
+      <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4" dir="rtl">
+        <div><label class="loc-label"><%= t('fields.routeTo') %></label><input name="route_to" value="<%= form.route_to || '' %>" class="loc-input" placeholder="<%= t('fields.destination') %>"></div>
+        <div><label class="loc-label"><%= t('fields.routeFrom') %></label><input name="route_from" value="<%= form.route_from || '' %>" class="loc-input" placeholder="<%= t('fields.origin') %>"></div>
+        <div class="md:col-span-2"><label class="loc-label"><%= t('fields.title') %></label><input name="expense_title" value="<%= form.expense_title || '' %>" class="loc-input" placeholder="<%= t('fields.routeLeg') %>"></div>
+        <div><label class="loc-label"><%= t('fields.category') %></label><input name="category" value="<%= form.category || '' %>" class="loc-input"></div>
+        <%- include('../partials/currency-fields', {
+          prefix: 'locCost',
+          amount: form.amount,
+          currency: form.currency,
+          amountLabelKey: 'fields.locationExpenseCost',
+          labelClass: 'loc-label',
+          inputClass: 'loc-input',
+        }) %>
+        <div class="flex items-end pb-1">
+          <label class="inline-flex cursor-pointer items-center gap-2 text-xs font-black text-slate-700">
+            <input type="hidden" name="billable_to_customer" value="0">
+            <input type="checkbox" name="billable_to_customer" value="1" class="rounded border-slate-300" <%= form.billable_to_customer !== 0 ? 'checked' : '' %>>
+            <%= t('fields.billableToCustomer') %>
+          </label>
+        </div>
+      </div>
+      <p class="mt-3 text-xs text-amber-800"><%= t('forms.cargoLocations.expenseCargoHint') %></p>
+    </div>
+
+    <div class="mt-4 flex justify-end"><button class="h-9 rounded-xl bg-teal-600 px-5 text-xs font-black text-white"><%= t('common.save') %></button></div>
+  </form>
+</div>
+<script>
+document.getElementById('locContainer')?.addEventListener('change', function () {
+  const o = this.selectedOptions[0];
+  if (!o) return;
+  if (!document.getElementById('transportNo').value) document.getElementById('transportNo').value = o.dataset.no || '';
+  if (!document.getElementById('locationName').value) document.getElementById('locationName').value = o.dataset.location || '';
+});
+</script>
+<% } %>
+
+<div class="loc-card overflow-hidden">
+  <%- include('../partials/table-toolbar', {
+    search,
+    buttons: [{ href: '/cargo-locations?form=create', label: t('pages.cargoLocations.add'), icon: 'plus', variant: 'primary' }],
+  }) %>
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-right text-sm">
+      <thead class="bg-slate-50 text-xs text-slate-500">
+        <tr>
+          <th class="px-4 py-3"><%= t('common.row') %></th>
+          <th class="px-4 py-3"><%= t('fields.container') %></th>
+          <th class="px-4 py-3"><%= t('fields.cargo') %></th>
+          <th class="px-4 py-3"><%= t('fields.customer') %></th>
+          <th class="px-4 py-3"><%= t('fields.route') %></th>
+          <th class="px-4 py-3"><%= t('fields.location') %></th>
+          <th class="px-4 py-3"><%= t('fields.stage') %></th>
+          <th class="px-4 py-3"><%= t('fields.status') %></th>
+          <th class="px-4 py-3"><%= t('fields.cost') %></th>
+          <th class="px-4 py-3"><%= t('fields.date') %></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        <% if (!rows.length) { %>
+          <tr><td colspan="10" class="px-4 py-10 text-center text-slate-500"><%= t('pages.cargoLocations.empty') %></td></tr>
+        <% } %>
+        <% rows.forEach((r, i) => { %>
+          <tr class="hover:bg-slate-50/70">
+            <td class="px-4 py-3 font-black text-slate-500"><%= rowNo(pagination, i) %></td>
+            <td class="px-4 py-3 font-black"><%= r.container_no || r.transport_no || '-' %></td>
+            <td class="px-4 py-3"><%= r.cargo_code ? `${r.cargo_code} — ${r.cargo_name}` : (r.cargo_name || '-') %></td>
+            <td class="px-4 py-3"><%= r.customer_name || '-' %></td>
+            <td class="px-4 py-3 text-xs"><% if (r.route_from || r.route_to) { %><% if (r.route_from && r.route_to) { %>از <%= r.route_from %> به <%= r.route_to %><% } else if (r.route_to) { %>به <%= r.route_to %><% } else { %>از <%= r.route_from %><% } %><% } else { %>-<% } %></td>
+            <td class="px-4 py-3 font-black"><%= r.location_name || '-' %></td>
+            <td class="px-4 py-3"><%= faStage(r.stage, stages) %></td>
+            <td class="px-4 py-3"><%= faLocationStatus(r.status, statuses) %></td>
+            <td class="px-4 py-3"><%= formatLegacyMoney(r, 'cost_usd', 'cost_currency') %></td>
+            <td class="px-4 py-3 text-xs whitespace-nowrap"><%= formatDateTime(r.arrived_at || r.created_at) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <div class="border-t px-4 py-3"><%- include('../partials/pagination') %></div>
+</div>
+</div>

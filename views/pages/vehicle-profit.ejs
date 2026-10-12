@@ -1,0 +1,9 @@
+<div class="space-y-5 printable-area" dir="<%= dir %>">
+<%- include('../partials/flash') %>
+<div class="customer-card rounded-[1.8rem] overflow-hidden">
+  <%- include('../partials/table-toolbar', { search: '', hideSearch: true, showPrint: true, buttons: [{ href: '/vehicle-trips', label: t('pages.vehicleTrips.title'), icon: 'truck', variant: 'primary' }] }) %>
+  <table class="min-w-full text-sm"><thead><tr class="bg-slate-50 text-xs"><th class="px-5 py-3"><%= t('fields.plateNo') %></th><th class="px-5 py-3"><%= t('fields.tripCount') %></th><th class="px-5 py-3"><%= t('fields.income') %></th><th class="px-5 py-3"><%= t('fields.expenses') %></th><th class="px-5 py-3"><%= t('fields.profit') %></th></tr></thead><tbody>
+  <% summaries.forEach(s => { %><tr class="border-t"><td class="px-5 py-3 font-black"><%= s.plate_no %> (<%= s.vehicle_code %>)</td><td class="px-5 py-3"><%= s.tripCount %></td><td class="px-5 py-3 text-emerald-700 font-black"><%= formatMoney(s.income) %></td><td class="px-5 py-3 text-red-700 font-black"><%= formatMoney(s.expenses) %></td><td class="px-5 py-3 font-black <%= s.profit >= 0 ? 'text-emerald-700' : 'text-red-700' %>"><%= formatMoney(s.profit) %></td></tr><% }) %>
+  </tbody></table>
+</div>
+</div>

@@ -1,0 +1,24 @@
+<%#
+  from, to, activeType
+%>
+<%
+  const tabs = [
+    { key: '', label: t('common.all') },
+    { key: 'income', label: t('fields.income') },
+    { key: 'expense', label: t('fields.expense') },
+    { key: 'withdraw', label: t('fields.withdraw') },
+    { key: 'adjustment', label: t('fields.adjustments') },
+  ];
+  const qs = (typeKey) => {
+    const p = new URLSearchParams({ type: 'cashbox' });
+    if (typeKey) p.set('cash_type', typeKey);
+    if (from) p.set('from', from);
+    if (to) p.set('to', to);
+    return `/reports?${p.toString()}`;
+  };
+%>
+<div class="no-print flex flex-wrap gap-2 mb-4">
+  <% tabs.forEach(tab => { %>
+    <a href="<%= qs(tab.key) %>" class="rounded-xl px-4 py-2 text-xs font-black <%= String(activeType || '') === tab.key ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-700' %>"><%= tab.label %></a>
+  <% }) %>
+</div>

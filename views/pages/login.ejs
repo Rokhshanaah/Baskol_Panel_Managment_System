@@ -1,0 +1,68 @@
+<div class="login-page" dir="<%= dir %>">
+  <section class="login-page__visual" aria-hidden="true">
+    <div class="login-page__visual-bg" style="background-image: url('/images/login-cargo-bg.png');"></div>
+    <div class="login-page__visual-overlay"></div>
+    <div class="login-page__visual-content">
+      <div class="login-page__blur-panel">
+        <div class="login-page__hero-brand">
+          <span class="login-page__logo login-page__logo--hero"><%- include('../partials/brand-logo') %></span>
+          <div class="login-page__hero-text">
+            <h1 class="login-page__brand-title login-page__brand-title--hero"><%= appSettings.systemName %></h1>
+            <p class="login-page__brand-subtitle login-page__brand-subtitle--hero"><%= appSettings.systemSubtitle %></p>
+          </div>
+        </div>
+        <h2 class="login-page__headline"><%= t('pages.login.headline') %></h2>
+        <p class="login-page__intro"><%= t('pages.login.intro') %></p>
+      </div>
+    </div>
+  </section>
+
+  <aside class="login-page__form-side">
+    <div class="login-page__form-wrap">
+      <div class="login-page__topbar">
+        <%- include('../partials/language-switcher') %>
+      </div>
+      <div class="login-page__mobile-brand">
+        <span class="login-page__logo login-page__logo--sm"><%- include('../partials/brand-logo') %></span>
+        <div>
+          <p class="login-page__brand-title"><%= appSettings.systemName %></p>
+          <p class="login-page__brand-subtitle"><%= appSettings.systemSubtitle %></p>
+        </div>
+      </div>
+
+      <div class="login-page__card">
+        <div class="login-page__card-head">
+          <h2 class="login-page__card-title"><%= t('pages.login.cardTitle') %></h2>
+          <p class="login-page__card-desc"><%= t('pages.login.cardDesc') %></p>
+        </div>
+
+        <% if (error) { %>
+          <div class="login-page__error"><%= error %></div>
+        <% } %>
+
+        <form method="POST" action="/login" autocomplete="off" class="login-page__form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div>
+            <label class="login-page__label"><%= t('pages.login.email') %></label>
+            <div class="login-page__field">
+              <span class="login-page__field-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v12H4V6Z"/><path d="m4 7 8 6 8-6"/></svg>
+              </span>
+              <input type="email" name="email" value="<%= email || '' %>" class="login-page__input" placeholder="admin@example.com" required>
+            </div>
+          </div>
+          <div>
+            <label class="login-page__label"><%= t('pages.login.password') %></label>
+            <div class="login-page__field">
+              <span class="login-page__field-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 11V8a5 5 0 0 1 10 0v3"/><path d="M5 11h14v10H5V11Z"/></svg>
+              </span>
+              <input type="password" name="password" class="login-page__input" placeholder="••••••••" required>
+            </div>
+          </div>
+          <button type="submit" class="login-page__submit"><%= t('pages.login.submit') %></button>
+        </form>
+      </div>
+    </div>
+  </aside>
+</div>

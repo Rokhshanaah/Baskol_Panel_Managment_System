@@ -1,0 +1,27 @@
+<div class="space-y-6" dir="<%= dir %>">
+  <%- include('../partials/flash', { flash }) %>
+
+  <% const cards = [
+    ['intro.users', 'users', 'violet', '/users', 'users'],
+    ['intro.customers', 'customer', 'cyan', '/customers', 'customers'],
+    ['intro.vehicles', 'truck', 'blue', '/vehicles', 'vehicles'],
+    ['intro.vehicleTrips', 'truck', 'sky', '/vehicle-trips', 'vehicle-trips'],
+    ['intro.containers', 'container', 'blue', '/containers', 'containers'],
+    ['intro.cargoItems', 'cargo', 'amber', '/cargo-items', 'cargo-items'],
+    ['intro.loading', 'loading', 'amber', '/container-loading', 'container-loading'],
+    ['intro.deliveries', 'cargo', 'green', '/deliveries', 'deliveries'],
+    ['intro.cargoLocations', 'location', 'rose', '/cargo-locations', 'cargo-locations'],
+    ['intro.expensesModule', 'expense', 'red', '/expenses', 'expenses'],
+    ['intro.payments', 'payment', 'cyan', '/payments', 'payments'],
+    ['intro.salaries', 'users', 'violet', '/salaries', 'salaries'],
+    ['intro.partners', 'money', 'purple', '/partners', 'partners'],
+    ['intro.cashbox', 'money', 'emerald', '/cashbox', 'cashbox'],
+    ['intro.vehicleProfit', 'report', 'green', '/vehicle-profit', 'vehicle-profit'],
+  ].filter(c => canPage(c[4])); %>
+
+  <div class="hub-card-grid grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+    <% cards.forEach(c => { %>
+      <%- include('../partials/glow-card-link', { href: c[3], title: t(`${c[0]}.title`), desc: t(`${c[0]}.desc`), iconName: c[1], color: c[2], cta: t('common.openPage') }) %>
+    <% }) %>
+  </div>
+</div>

@@ -1,0 +1,16 @@
+<%
+const navColorMap = {
+  dashboard: 'sky',
+  scale: 'cyan',
+  database: 'violet',
+  report: 'amber',
+  settings: 'blue',
+};
+const tone = navColorMap[iconName] || 'sky';
+%>
+<a data-sidebar-link href="<%= href %>" class="glow-card glow-card--nav glow-card--<%= tone %><%= active ? ' is-active' : '' %>">
+  <div class="glow-card__inner glow-card__inner--nav">
+    <span class="glow-card__icon glow-card__icon--nav"><%- icon(iconName, 'h-4 w-4') %></span>
+    <span class="glow-card__title glow-card__title--nav"><%= label %></span>
+  </div>
+</a>

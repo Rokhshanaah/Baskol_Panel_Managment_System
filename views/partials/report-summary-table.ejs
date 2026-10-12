@@ -1,0 +1,19 @@
+<% if (stats?.length) { %>
+<div class="hidden print:block theme-surface rounded-none border shadow-none overflow-hidden report-summary-panel report-print-only">
+  <div class="border-b border-[var(--app-border)] px-5 py-3">
+    <h2 class="font-black text-sm"><%= typeof title !== 'undefined' && title ? title : t('fields.reportSummary') %></h2>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[420px] text-sm report-table report-summary-table">
+      <tbody>
+        <% stats.forEach((s) => { %>
+          <tr>
+            <th class="px-4 py-2.5 text-right font-black w-[45%] theme-surface-muted"><%= s.label %></th>
+            <td class="px-4 py-2.5 font-bold"><%= s.value %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>

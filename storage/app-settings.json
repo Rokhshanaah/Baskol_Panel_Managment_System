@@ -1,0 +1,26 @@
+{
+  "systemName": "سیستم باسکول",
+  "systemSubtitle": "گدام، بارچلانی، فاکتور",
+  "companyName": "",
+  "companyPhone": "",
+  "companyEmail": "",
+  "companyAddress": "",
+  "invoiceFooter": "",
+  "defaultCurrency": "AFN",
+  "enabledCurrencies": [
+    "USD",
+    "AFN",
+    "CNY",
+    "PKR"
+  ],
+  "currencyRates": {
+    "USD": 1,
+    "AFN": 70,
+    "CNY": 7.2,
+    "PKR": 280
+  },
+  "recordsPerPage": 15,
+  "codeDigits": 6,
+  "printFormat": "A4",
+  "logoPath": "uploads/settings/1788586053011-810947f1fb6c.jpg"
+}

@@ -1,0 +1,16 @@
+<a href="<%= href %>" class="glow-card <%= typeof cardSize === 'string' && cardSize === 'stat' ? 'glow-card--stat' : 'glow-card--hub' %> glow-card--<%= color %> group">
+  <div class="glow-card__inner">
+    <div>
+      <div class="glow-card__head">
+        <span class="glow-card__icon shrink-0"><%- icon(iconName, 'h-4 w-4') %></span>
+        <p class="glow-card__title"><%= title %></p>
+      </div>
+      <% if (desc) { %><p class="glow-card__desc"><%= desc %></p><% } %>
+    </div>    <div class="flex items-end justify-between gap-4">
+      <% if (typeof value !== 'undefined' && value !== null && value !== '') { %>
+        <p class="glow-card__value dash-value"><%= value %></p>
+      <% } %>
+      <span class="glow-card__cta"><%= cta || t('common.openPage') %> <span aria-hidden="true">←</span></span>
+    </div>
+  </div>
+</a>

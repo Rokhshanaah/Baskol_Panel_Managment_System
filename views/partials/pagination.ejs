@@ -1,0 +1,19 @@
+<% if (pagination && pagination.total > 0) { %>
+<div class="flex flex-wrap items-center justify-between gap-3 text-xs opacity-70">
+  <span><%= t('fields.showing', { from: pagination.from, to: pagination.to, total: pagination.total, perPage: pagination.perPage }) %></span>
+  <% if (pagination.lastPage > 1) { %>
+  <div class="flex flex-wrap items-center gap-1">
+    <% const base = new URLSearchParams(query); base.delete('page'); %>
+    <% if (pagination.page > 1) { const prev = new URLSearchParams(base); prev.set('page', pagination.page - 1); %>
+      <a href="?<%= prev.toString() %>" class="app-btn-muted min-w-9 h-9 px-2 inline-flex items-center justify-center"><%= t('fields.prev') %></a>
+    <% } %>
+    <% for (let p = 1; p <= pagination.lastPage; p++) { const q = new URLSearchParams(base); q.set('page', p); %>
+      <a href="?<%= q.toString() %>" class="min-w-9 h-9 px-2 inline-flex items-center justify-center rounded-xl border <%= p===pagination.page ? 'bg-teal-600 text-white border-teal-600' : 'app-btn-muted' %>"><%= p %></a>
+    <% } %>
+    <% if (pagination.page < pagination.lastPage) { const next = new URLSearchParams(base); next.set('page', pagination.page + 1); %>
+      <a href="?<%= next.toString() %>" class="app-btn-muted min-w-9 h-9 px-2 inline-flex items-center justify-center"><%= t('fields.next') %></a>
+    <% } %>
+  </div>
+  <% } %>
+</div>
+<% } %>

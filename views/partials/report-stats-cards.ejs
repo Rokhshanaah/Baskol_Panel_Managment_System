@@ -1,0 +1,8 @@
+<% if (stats?.length) { %>
+<div class="stat-card-grid grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 print:hidden">
+  <% const statColors = ['blue', 'emerald', 'amber', 'rose', 'cyan', 'violet', 'sky', 'purple', 'green', 'red']; %>
+  <% stats.forEach((s, i) => { %>
+    <%- include('./glow-card-stat', { title: s.label, value: s.value, iconName: s.icon || 'report', color: s.color || statColors[i % statColors.length] }) %>
+  <% }) %>
+</div>
+<% } %>

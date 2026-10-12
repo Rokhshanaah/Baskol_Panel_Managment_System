@@ -1,0 +1,21 @@
+<div class="profile-menu" id="headerProfileMenu">
+  <button type="button" id="headerProfileBtn" class="app-header__avatar-link" aria-expanded="false" aria-controls="headerProfileDropdown" aria-label="<%= t('nav.profile') %>">
+    <%- include('./avatar', { photoPath: user?.photo_path, name: user?.name, fallback: t('nav.user'), wrapClass: 'app-header__avatar' }) %>
+  </button>
+  <div id="headerProfileDropdown" class="profile-dropdown hidden" role="menu" aria-labelledby="headerProfileBtn">
+    <div class="profile-dropdown__header">
+      <%- include('./avatar', { photoPath: user?.photo_path, name: user?.name, fallback: t('nav.user'), wrapClass: 'profile-dropdown__avatar' }) %>
+      <div class="min-w-0 flex-1">
+        <p class="profile-dropdown__name truncate"><%= user?.name || t('nav.user') %></p>
+        <p class="profile-dropdown__email truncate"><%= user?.email || '' %></p>
+        <% if (user?.role) { %><p class="profile-dropdown__role"><%= fa(user.role) %></p><% } %>
+      </div>
+    </div>
+    <div class="profile-dropdown__actions">
+      <form method="POST" action="/logout" class="profile-dropdown__logout-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="profile-dropdown__logout" role="menuitem"><%- icon('logout','w-4 h-4') %><span><%= t('nav.logout') %></span></button>
+      </form>
+    </div>
+  </div>
+</div>

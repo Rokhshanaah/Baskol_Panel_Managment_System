@@ -1,0 +1,5 @@
+<% if (flash?.message) { %>
+<div class="mb-5 rounded-2xl border px-4 py-3 text-sm font-bold <%= flash.type === 'error' ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300' %>">
+  <%= flash.message %>
+</div>
+<% } %>

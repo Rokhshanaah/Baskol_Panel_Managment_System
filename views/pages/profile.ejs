@@ -1,0 +1,34 @@
+<div class="space-y-5" dir="<%= dir %>">
+<%- include('../partials/flash') %>
+
+<div class="users-panel rounded-[1.8rem] p-5 md:p-6">
+  <div class="mb-5 flex flex-col gap-4 border-b pb-5 md:flex-row md:items-center md:justify-between">
+    <div class="flex items-center gap-4">
+      <%- include('../partials/avatar', { photoPath: form.photo_path, name: form.name, fallback: t('nav.user'), wrapClass: 'profile-avatar-preview' }) %>
+      <div>
+        <h3 class="font-black"><%= t('pages.profile.title') %></h3>
+        <p class="mt-1 text-xs text-slate-500"><%= t('pages.profile.subtitle') %></p>
+      </div>
+    </div>
+    <a href="/dashboard" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-black"><%= t('fields.back') %></a>
+  </div>
+
+  <form method="POST" action="/profile/save" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div><label class="users-label"><%= t('fields.name') %></label><input name="name" value="<%= form.name || '' %>" class="users-input" required></div>
+      <div><label class="users-label"><%= t('fields.email') %></label><input type="email" value="<%= form.email || '' %>" class="users-input opacity-70" readonly disabled></div>
+      <div><label class="users-label"><%= t('fields.password') %> <%= t('fields.passwordIfChange') %></label><input type="password" name="password" class="users-input" autocomplete="new-password"></div>
+      <div class="md:col-span-2 xl:col-span-3">
+        <label class="users-label"><%= t('fields.photo') %> <span class="text-xs font-normal text-slate-500">(<%= t('fields.optional') %>)</span></label>
+        <input type="file" name="photo" accept="image/*" class="users-input !py-2 file:mr-3 file:rounded-xl file:border-0 file:bg-teal-50 file:px-3 file:py-1.5 file:text-sm file:font-black file:text-teal-700">
+        <p class="mt-1 text-xs text-slate-500"><%= t('fields.photoHint') %></p>
+      </div>
+    </div>
+    <div class="mt-5 flex justify-end gap-3">
+      <a href="/dashboard" class="h-11 inline-flex items-center rounded-2xl bg-slate-100 px-5 text-sm font-black"><%= t('common.cancel') %></a>
+      <button class="h-11 rounded-2xl bg-teal-600 px-6 text-sm font-black text-white"><%= t('common.save') %></button>
+    </div>
+  </form>
+</div>
+</div>

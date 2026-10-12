@@ -1,0 +1,30 @@
+<%#
+  baseUrl (required), activeScope, from, to, category, extraQuery
+%>
+<%
+  const tabs = [
+    { key: '', label: t('common.all') },
+    { key: 'company', label: t('fields.company') },
+    { key: 'cargo', label: t('fields.cargo') },
+    { key: 'container', label: t('fields.container') },
+    { key: 'vehicle_trip', label: t('fields.tripExpenses') },
+  ];
+  const qs = (scopeKey) => {
+    const p = new URLSearchParams();
+    if (typeof extraQuery === 'object' && extraQuery) {
+      Object.entries(extraQuery).forEach(([k, v]) => { if (v) p.set(k, v); });
+    }
+    if (scopeKey) p.set('scope', scopeKey);
+    else p.delete('scope');
+    if (from) p.set('from', from);
+    if (to) p.set('to', to);
+    if (category) p.set('category', category);
+    const s = p.toString();
+    return s ? `${baseUrl}?${s}` : baseUrl;
+  };
+%>
+<div class="no-print flex flex-wrap gap-2 mb-4">
+  <% tabs.forEach(tab => { %>
+    <a href="<%= qs(tab.key) %>" class="rounded-xl px-4 py-2 text-xs font-black <%= String(activeScope || '') === tab.key ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-700' %>"><%= tab.label %></a>
+  <% }) %>
+</div>

@@ -1,0 +1,38 @@
+<div class="space-y-5" dir="<%= dir %>">
+<%- include('../partials/flash') %>
+
+<% if (form) { const cbm=((Number(form.length_cm)||0)*(Number(form.width_cm)||0)*(Number(form.height_cm)||0))/1000000; const total=cbm*(Number(form.carton_count)||0); %>
+<div class="cargo-panel rounded-[1.8rem] p-5 md:p-6"><div class="mb-5 flex justify-between border-b border-slate-200 pb-5"><div><h3 class="text-base font-black"><%= editingId?t('forms.cargoItems.edit'):t('forms.cargoItems.new') %></h3><p class="mt-1 text-xs text-slate-500"><%= t('forms.cargoItems.desc') %></p></div><a href="/cargo-items" class="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-black"><%= t('common.closeForm') %></a></div><form method="POST" action="/cargo-items/save" class="space-y-5"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="id" value="<%= editingId||'' %>"><input type="hidden" name="cargo_code" value="<%= form.cargo_code||'' %>"><div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+<div><label class="cargo-label"><%= t('fields.cargoCode') %></label><div class="h-11 flex items-center rounded-2xl border border-teal-200 bg-teal-50 px-3 font-black text-teal-700"><%= form.cargo_code||t('fields.auto') %></div></div>
+<div><label class="cargo-label"><%= t('fields.customer') %></label><select name="customer_id" class="cargo-input" required><option value=""><%= t('fields.selectCustomer') %></option><% for(const c of customers){ %><option value="<%= c.id %>" <%= String(form.customer_id||'')===String(c.id)?'selected':'' %>><%= c.customer_code %> - <%= c.name %></option><% } %></select></div>
+<div class="md:col-span-2"><label class="cargo-label"><%= t('fields.cargoName') %></label><input name="name" value="<%= form.name||'' %>" class="cargo-input" required></div>
+<div><label class="cargo-label"><%= t('fields.cartons') %></label><input id="cargoCartonCount" name="carton_count" type="number" min="0" value="<%= form.carton_count??0 %>" class="cargo-input cargo-cbm-input"></div><div><label class="cargo-label"><%= t('fields.lengthCm') %></label><input id="cargoLengthCm" name="length_cm" type="number" step="0.01" min="0" value="<%= form.length_cm??0 %>" class="cargo-input cargo-cbm-input"></div><div><label class="cargo-label"><%= t('fields.widthCm') %></label><input id="cargoWidthCm" name="width_cm" type="number" step="0.01" min="0" value="<%= form.width_cm??0 %>" class="cargo-input cargo-cbm-input"></div><div><label class="cargo-label"><%= t('fields.heightCm') %></label><input id="cargoHeightCm" name="height_cm" type="number" step="0.01" min="0" value="<%= form.height_cm??0 %>" class="cargo-input cargo-cbm-input"></div>
+<div><label class="cargo-label"><%= t('fields.cbmPerCarton') %></label><div id="cargoCbmPerCarton" class="cargo-input flex items-center bg-slate-50 font-black"><%= number(cbm,6) %></div></div><div><label class="cargo-label"><%= t('fields.totalCbmSum') %></label><div id="cargoTotalCbm" class="cargo-input flex items-center bg-slate-50 font-black"><%= number(total,4) %></div></div><div><label class="cargo-label"><%= t('fields.totalWeightKg') %></label><input name="gross_weight_kg" type="number" step="0.01" min="0" value="<%= form.gross_weight_kg??0 %>" class="cargo-input"></div>
+<div><label class="cargo-label"><%= t('fields.status') %></label><select name="status" class="cargo-input"><% for(const v of ['registered','in_container','in_transit','on_ship','at_sea','arrived','at_destination','kabul_warehouse','in_kabul_warehouse','ready_for_delivery','delivered']){ %><option value="<%= v %>" <%= form.status===v?'selected':'' %>><%= fa(v) %></option><% } %></select></div>
+<div class="md:col-span-3"><label class="cargo-label"><%= t('fields.description') %></label><textarea name="description" rows="2" class="cargo-input !h-auto py-3"><%= form.description||'' %></textarea></div></div><div class="flex justify-end gap-3"><a href="/cargo-items" class="h-11 inline-flex items-center rounded-2xl bg-slate-100 px-5 text-sm font-black"><%= t('common.cancel') %></a><button class="h-11 rounded-2xl bg-teal-600 px-6 text-sm font-black text-white"><%= t('common.save') %></button></div></form></div>
+<script>
+(function(){
+  function num(v){const n=parseFloat(v);return Number.isFinite(n)?n:0;}
+  function fmt(v,d){return num(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
+  function recalcCbm(){
+    const l=num(document.getElementById('cargoLengthCm')?.value);
+    const w=num(document.getElementById('cargoWidthCm')?.value);
+    const h=num(document.getElementById('cargoHeightCm')?.value);
+    const cartons=num(document.getElementById('cargoCartonCount')?.value);
+    const cbm=(l*w*h)/1000000;
+    const total=cbm*cartons;
+    const perEl=document.getElementById('cargoCbmPerCarton');
+    const totalEl=document.getElementById('cargoTotalCbm');
+    if(perEl) perEl.textContent=fmt(cbm,6);
+    if(totalEl) totalEl.textContent=fmt(total,4);
+  }
+  document.querySelectorAll('.cargo-cbm-input').forEach(el=>{
+    el.addEventListener('input',recalcCbm);
+    el.addEventListener('change',recalcCbm);
+  });
+  recalcCbm();
+})();
+</script>
+<% } %>
+<div class="cargo-card overflow-hidden rounded-[1.8rem]"><%- include('../partials/table-toolbar', { search, buttons: [{ href: '/cargo-items?form=create', label: t('pages.cargoItems.add'), icon: 'plus', variant: 'primary' }] }) %><div class="overflow-x-auto"><table class="min-w-full text-right text-sm"><thead><tr class="border-b bg-slate-50 text-xs text-slate-500"><th class="px-5 py-4"><%= t('common.row') %></th><th class="px-5 py-4"><%= t('fields.codeShort') %></th><th class="px-5 py-4"><%= t('fields.cargoName') %></th><th class="px-5 py-4"><%= t('fields.customer') %></th><th class="px-5 py-4"><%= t('fields.cartons') %></th><th class="px-5 py-4"><%= t('fields.cbm') %></th><th class="px-5 py-4"><%= t('fields.weight') %></th><th class="px-5 py-4"><%= t('fields.status') %></th><th class="px-5 py-4"><%= t('common.actions') %></th></tr></thead><tbody class="divide-y"><% if(!rows.length){ %><tr><td colspan="9" class="px-5 py-12 text-center text-slate-500"><%= t('pages.cargoItems.empty') %></td></tr><% } %><% rows.forEach((row, i) => { %><tr class="hover:bg-teal-50/50"><td class="px-5 py-4 font-black text-slate-500"><%= rowNo(pagination, i) %></td><td class="px-5 py-4 font-black"><%= row.cargo_code %></td><td class="px-5 py-4 font-black"><%= row.name %></td><td class="px-5 py-4"><%= row.customer_name||'-' %></td><td class="px-5 py-4"><%= row.carton_count||0 %></td><td class="px-5 py-4"><%= number(row.total_cbm,4) %></td><td class="px-5 py-4"><%= faWeight(row.gross_weight_kg) %></td><td class="px-5 py-4"><span class="rounded-xl bg-slate-100 px-3 py-1 text-xs font-black"><%= fa(row.status) %></span></td><td class="px-5 py-4"><div class="flex flex-wrap gap-2"><a href="/cargo-items/<%= row.id %>/billing" class="rounded-2xl bg-teal-50 px-3 py-2 text-xs font-black text-teal-700 hover:bg-teal-600 hover:text-white"><%= t('fields.customerAccount') %></a><a href="/cargo-items?edit=<%= row.id %>" class="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-black hover:bg-teal-600 hover:text-white"><%= t('common.edit') %></a><form method="POST" action="/cargo-items/<%= row.id %>/delete"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button data-confirm="<%= t('fields.confirmDeleteCargo') %>" class="rounded-2xl bg-red-50 px-3 py-2 text-xs font-black text-red-600 hover:bg-red-500 hover:text-white"><%= t('common.delete') %></button></form></div></td></tr><% }) %></tbody></table></div><div class="border-t px-5 py-4"><%- include('../partials/pagination') %></div></div>
+</div>

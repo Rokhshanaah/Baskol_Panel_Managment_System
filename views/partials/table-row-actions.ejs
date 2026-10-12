@@ -1,0 +1,13 @@
+<div class="table-row-actions">
+  <a href="<%= editHref %>" class="table-row-actions__btn table-row-actions__btn--edit">
+    <%- icon('edit', 'h-4 w-4') %><span><%= t('common.edit') %></span>
+  </a>
+  <% if (typeof showDelete === 'undefined' || showDelete) { %>
+    <form method="POST" action="<%= deleteAction %>" class="table-row-actions__form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" data-confirm="<%= confirmMessage || t('common.confirm') %>" class="table-row-actions__btn table-row-actions__btn--delete">
+        <%- icon('trash', 'h-4 w-4') %><span><%= t('common.delete') %></span>
+      </button>
+    </form>
+  <% } %>
+</div>

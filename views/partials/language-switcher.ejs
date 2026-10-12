@@ -1,0 +1,9 @@
+<div class="lang-switch" role="group" aria-label="<%= t('common.language') %>">
+  <% for (const item of locales) { %>
+    <a
+      href="/locale/<%= item.code %>?redirect=<%= encodeURIComponent(currentPath) %>"
+      class="lang-switch__btn<%= locale === item.code ? ' is-active' : '' %>"
+      aria-current="<%= locale === item.code ? 'true' : 'false' %>"
+    ><%= item.label %></a>
+  <% } %>
+</div>

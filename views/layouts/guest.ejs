@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>" dir="<%= dir %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title ? `${title} | ${appSettings.systemName}` : `${t('pages.login.title')} | ${appSettings.systemName}` %></title>
+  <script>
+    (function () {
+      var saved = localStorage.getItem('baskol-theme');
+      var theme = saved === 'light' || saved === 'dark'
+        ? saved
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <%- assetTags %>
+</head>
+<body class="login-shell app-shell">
+  <%- body %>
+</body>
+</html>

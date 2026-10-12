@@ -1,0 +1,12 @@
+<%
+const url = photoPath ? '/storage/' + String(photoPath).replace(/^\/+/, '') : '';
+const initial = (name || fallback || 'U').trim().slice(0, 1).toUpperCase();
+const avatarClass = typeof wrapClass === 'string' ? wrapClass : 'avatar-wrap';
+%>
+<div class="<%= avatarClass %>">
+  <% if (url) { %>
+    <img src="<%= url %>" alt="" class="avatar-img" loading="lazy">
+  <% } else { %>
+    <span class="avatar-initial"><%= initial %></span>
+  <% } %>
+</div>

@@ -1,0 +1,24 @@
+<%
+  const brandLogoPath = typeof logoPath !== 'undefined' ? logoPath : (appSettings?.logoPath || '');
+  const brandLogoUrl = brandLogoPath ? '/storage/' + String(brandLogoPath).replace(/^\/+/, '') : '';
+  const headerSize = typeof size !== 'undefined' ? size : 'md';
+%>
+<div class="print-brand-header print-brand-header--<%= headerSize %> <%= typeof headerClass !== 'undefined' ? headerClass : '' %>">
+  <% if (brandLogoUrl) { %>
+    <img src="<%= brandLogoUrl %>" alt="" class="print-brand-header__logo">
+  <% } else { %>
+    <span class="print-brand-header__logo-fallback"><%- include('./brand-logo', { logoClass: 'brand-logo--print' }) %></span>
+  <% } %>
+  <div class="print-brand-header__text">
+    <% if (typeof title !== 'undefined' && title) { %><h2 class="print-brand-header__title"><%= title %></h2><% } %>
+    <strong class="print-brand-header__name"><%= appSettings.companyName || appSettings.systemName %></strong>
+    <% if (appSettings.systemSubtitle) { %><span class="print-brand-header__subtitle"><%= appSettings.systemSubtitle %></span><% } %>
+    <% if (appSettings.companyPhone || appSettings.companyEmail || appSettings.companyAddress) { %>
+      <div class="print-brand-header__meta">
+        <% if (appSettings.companyPhone) { %><span><%= t('fields.phone') %>: <%= appSettings.companyPhone %></span><% } %>
+        <% if (appSettings.companyEmail) { %><span><%= t('fields.email') %>: <%= appSettings.companyEmail %></span><% } %>
+        <% if (appSettings.companyAddress) { %><span><%= t('fields.address') %>: <%= appSettings.companyAddress %></span><% } %>
+      </div>
+    <% } %>
+  </div>
+</div>
